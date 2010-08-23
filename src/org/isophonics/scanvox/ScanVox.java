@@ -1,5 +1,6 @@
-package net.sf.supercollider.scanvox;
+package org.isophonics.scanvox;
 
+import org.isophonics.scanvox.R;
 import android.app.Activity;
 import android.os.Bundle;
 
