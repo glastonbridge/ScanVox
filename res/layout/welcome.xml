@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:orientation="vertical"
+  >
+  <TextView 
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:layout_alignParentTop="true"
+  android:layout_centerHorizontal="true"
+  android:text="[scanvox]"
+  style="@style/Title" />
+  <LinearLayout
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:layout_centerInParent="true"
+  android:orientation="vertical">
+  <TextView
+  android:id="@+id/content"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+  android:text="Press REC to record a few seconds of voice into the microphone.\n\n
+  
+Scanvox will translate it into a synth sound and put it on the looping display.\n\n
+  
+You can record and arrange multiple sounds." />
+  <ImageView android:src="@drawable/icon" 
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content" 
+  android:layout_below="@+id/content" />
+  </LinearLayout>
+  <ImageButton android:id="@+id/Record" android:text="REC"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"  
+  android:layout_alignParentBottom="true"
+  android:layout_centerHorizontal="true"
+  android:background="#FFFFFF"
+  android:paddingBottom="40px"
+  android:src="@drawable/rec" />
+
+
+</RelativeLayout>
