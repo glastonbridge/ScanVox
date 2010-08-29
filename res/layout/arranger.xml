@@ -1,26 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<org.isophonics.scanvox.Arranger
   xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"
+  android:id="@+id/arranger"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
 >
-  <LinearLayout
-	android:id="@+id/Transport"
-	android:layout_alignParentBottom="true"
-	android:layout_width="fill_parent"
-	android:layout_height="wrap_content"
-  >
-    <TextView
-	  android:layout_width="fill_parent"
-	  android:layout_height="wrap_content"
-      android:text="toast"
-    />
-  </LinearLayout>
-  <SurfaceView
-	android:id="@+id/Tracker"
-	android:layout_above="@+id/Transport"
-	android:layout_alignParentTop="true"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
-  />
-</RelativeLayout>
+</org.isophonics.scanvox.Arranger>

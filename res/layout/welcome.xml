@@ -26,7 +26,7 @@
 Scanvox will translate it into a synth sound and put it on the looping display.\n\n
   
 You can record and arrange multiple sounds." />
-  <ImageView android:src="@drawable/icon" 
+  <ImageView android:src="@drawable/robot_icon" 
   android:layout_width="fill_parent"
   android:layout_height="wrap_content" 
   android:layout_below="@+id/content" />

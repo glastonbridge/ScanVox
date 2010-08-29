@@ -2,13 +2,15 @@ package org.isophonics.scanvox;
 
 import org.isophonics.scanvox.Arrangement.Sound;
 
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
-import android.graphics.Paint.Style;
+import android.os.Handler;
+import android.os.Message;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -23,66 +25,73 @@ import android.widget.Toast;
  * 
  * @author alex shaw
  */
-public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
+public class Arranger extends View {
 	private static final String TAG = "Arranger";
-	public Paint backgroundPaint;
+	
+	/** Paint objects for styling various parts of the Arranger */
+	public Paint 
+		backgroundPaint, 
+		rowDivisionPaint, 
+		timeDivisionPaint,
+		soundPaint;
+	
+	/** Dimensions of the arrangement display */
 	public int rowHeight;
 	// The mythical audio tick refers to whatever we use to sync
 	// up with the arrangement (poss some subdivision of beat?)
 	public float pixelsPerAudioTick = 16; // if this goes < 14 interesting things may have to happen with the bevel graphics
 	public float bevelWidth; // the width of the nice rounded edges on sounds
-	private SurfaceHolder holder;
-	private SurfaceView view;
+	public int ticksPerDivision = 4;
+	private int height = 320; // will be updated later
+	private Dashboard dashboard;
+	
 	protected Arrangement arrangement=new Arrangement(0);
-	public Arranger(SurfaceView s) {
-		holder = s.getHolder();
-		holder.addCallback(this);
-		view = s;
-		backgroundPaint = new Paint();
-		s.setOnTouchListener(this);
-		soundBackLeft   = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_back_left);
-		soundBackMiddle = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_back_mid);
-		soundBackRight  = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_back_right);
-		soundFrontLeft   = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_front_left);
-		soundFrontMiddle = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_front_mid);
-		soundFrontRight  = BitmapFactory.decodeResource(s.getResources(), R.drawable.chunk_front_right);
-		bevelWidth = soundBackLeft.getWidth();
-		rowHeight  = soundBackLeft.getHeight();
+	
+	public Arranger(Context c, AttributeSet s) {
+		super(c,s);
+		init();
 	}
 	
-	/**
-	 * Set the background colour for the arranger
-	 * 
-	 * @param colourCode
-	 */
-	public void setBackgroundColour(int colourCode) {
-		backgroundPaint.setColor(colourCode);
+	public Arranger(Context c) {
+		super(c);
+		init();
+	}
+	
+	private void init() {
+		dashboard = new Dashboard(getContext());
+		
+		backgroundPaint = new Paint();
+		timeDivisionPaint = new Paint();
+		rowDivisionPaint = new Paint();
+		soundPaint = new Paint(); // used only on bitmaps, doesn't do very much
+		soundPaint.setAntiAlias(false);
+		
+		soundBackLeft    = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_back_left);
+		soundBackMiddle  = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_back_mid);
+		soundBackRight   = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_back_right);
+		soundFrontLeft   = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_left);
+		soundFrontMiddle = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_mid);
+		soundFrontRight  = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_right);
+		
+		bevelWidth       = soundBackLeft.getWidth();
+		rowHeight        = soundBackLeft.getHeight();
+		pixelsPerAudioTick = getWidth()/arrangement.length;
+		height = getHeight();
+		
+		invalidate();
 	}
 	
 	/**
 	 * Set the arrangement to edit
 	 * 
-	 * @param a
+	 * @param a my arrangement
 	 */
 	public void setArrangement(Arrangement a) {
 		arrangement = a;
-		pixelsPerAudioTick = view.getWidth()/arrangement.length;
+		pixelsPerAudioTick = getWidth()/arrangement.length;
 		Log.d(TAG,"Setting pixels per audio tick to "+pixelsPerAudioTick);
 	}
 	
-	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-
-		pixelsPerAudioTick = view.getWidth()/arrangement.length;
-		drawSurface();
-	}
-
-	public void surfaceCreated(SurfaceHolder holder) {
-		drawSurface();
-	}
-
-	public void surfaceDestroyed(SurfaceHolder holder) {
-	}
-
 	private Sound soundBeingMoved = null;
 	private float soundBeingMovedX, soundBeingMovedY;
 	/** The distance between the top left corner and where you're actually touching */
@@ -91,29 +100,44 @@ public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
 	private Arrangement.Row soundBeingMovedOldHome;
 	
 	/**
-	 * Refresh the graphics on the surface
+	 * Refresh the user graphics
 	 */
-	private void drawSurface() {
-		Canvas c = null;
-		try {
-			c = holder.lockCanvas();
-			if (c != null) {
-				c.drawRect(0,0,c.getWidth(),c.getHeight(),backgroundPaint);
-				int rowNum=0;
-				for (Arrangement.Row row : arrangement.rows) drawRow(c,row,rowNum++); // crow!
-				if (soundBeingMoved != null) 
-					drawSound(
-							c,
-							soundBeingMoved,
-							soundBeingMovedX,
-							soundBeingMovedY);
-			}
-		} finally {
-			if (c != null) {
-				holder.unlockCanvasAndPost(c);
-			}
-		}
+	@Override
+	protected void onDraw(Canvas c) {
+
+		pixelsPerAudioTick = c.getWidth()/arrangement.length;
+		c.drawRect(0,0,c.getWidth(),height,backgroundPaint);
+		drawGrid(c);
+		int rowNum=0;
+		for (Arrangement.Row row : arrangement.rows) drawRow(c,row,rowNum++); // crow!
+		if (soundBeingMoved != null) 
+			drawSound(
+					c,
+					soundBeingMoved,
+					soundBeingMovedX,
+					soundBeingMovedY);
+		dashboard.draw(c);
 	}
+	
+	/**
+	 * Set up the size of the 
+	 */
+	
+	/**
+	 * Draw a visual mesh for the user sounds to fit in
+	 * @param c The canvas to draw to
+	 */
+	private void drawGrid (Canvas c) {
+		int beyondLastRow = rowHeight*arrangement.rows.size() + 1;
+		int width = c.getWidth();
+		int height = c.getHeight();
+		int blockDivision = (int) pixelsPerAudioTick * ticksPerDivision;
+		for ( int i = rowHeight ; i < beyondLastRow ; i += rowHeight) 
+			c.drawLine(0, i, width, i, rowDivisionPaint);
+		if (blockDivision >0) for ( int i = blockDivision ; i < width ; i += blockDivision)
+			c.drawLine(i, 0, i, height, timeDivisionPaint);
+	}
+	
 	private void drawRow (Canvas c, Arrangement.Row r, int rowNum) {
 		for (Sound s : r) drawSound(c,s, s.getStartTime()*pixelsPerAudioTick, rowNum*rowHeight);
 	}
@@ -125,10 +149,6 @@ public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
 	private Bitmap soundFrontMiddle;
 	private Bitmap soundFrontRight;
 	private void drawSound (Canvas c, Sound s,float x, float y) {
-		Paint soundPaint = new Paint();
-		soundPaint.setColor (Color.BLUE);
-		soundPaint.setStyle (Style.FILL);
-		
 		Rect dest = new Rect ();
 		dest.top = (int) y;
 		dest.bottom = (int) (y + rowHeight);
@@ -142,6 +162,22 @@ public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
 		c.drawBitmap(soundFrontRight, x + s.getLength()*pixelsPerAudioTick - bevelWidth,y,soundPaint);
 	}
 
+    private RefreshHandler mRedrawHandler = new RefreshHandler();
+
+    class RefreshHandler extends Handler {
+
+        @Override
+        public void handleMessage(Message msg) {
+            Arranger.this.invalidate();
+        }
+
+        public void sleep(long delayMillis) {
+                this.removeMessages(0);
+            sendMessageDelayed(obtainMessage(0), delayMillis);
+        }
+    };
+
+	
 	/**
 	 * The cases we want to consider are:
 	 * 
@@ -150,12 +186,13 @@ public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
 	 * 3) The release of a sound back into a row
 	 * 
 	 */
-	public boolean onTouch(View v, MotionEvent event) {
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
 		if (event.getAction()==MotionEvent.ACTION_DOWN) {
 			if ( soundBeingMoved != null ) {
 				// Sanity check, we should never have an action down before a previous action up
 				Log.e(TAG,"Arranger was asked to pick up a sound while it was already holding one.");
-				Toast.makeText(view.getContext(), "I've got confused, and I might have mucked up your tune.", Toast.LENGTH_SHORT);
+				Toast.makeText(getContext(), "I've got confused, and I might have mucked up your tune.", Toast.LENGTH_SHORT).show();
 				soundBeingMoved = null;
 			}
 			int rowNum = (int) event.getY() / rowHeight;
@@ -167,20 +204,26 @@ public class Arranger implements SurfaceHolder.Callback, View.OnTouchListener {
 					soundBeingMovedOldHome = row;
 					soundBeingMovedHandleX = event.getX() - soundBeingMoved.getStartTime()*pixelsPerAudioTick;
 					soundBeingMovedHandleY = event.getY() % rowHeight;
+					invalidate();
+					return true;
 				}
+			} 
+			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
+			if (buttonId != -1) {
+				if (buttonId == Dashboard.recordId) dashboard.startProgressBar(2000,mRedrawHandler);
+				mRedrawHandler.sleep(50);
 			}
-			return true;
 		} else if (event.getAction()==MotionEvent.ACTION_MOVE) {
 			soundBeingMovedX = event.getX() - soundBeingMovedHandleX;
 			soundBeingMovedY = event.getY() - soundBeingMovedHandleY;
-			drawSurface();
+			invalidate();
 			return true;
 		} else if (event.getAction()==MotionEvent.ACTION_UP && soundBeingMoved != null) {
 			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, soundBeingMoved)
 			 && !soundBeingMovedOldHome.add(soundBeingMoved))
 				Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
 			soundBeingMoved = null;
-			drawSurface();
+			invalidate();
 			return true;
 		}
 		return false;
