@@ -32,11 +32,12 @@ public class Arrangement {
 	public static class Sound {
 		private int startTime = 0;
 		private int length = 0;
-		public Sound(int s, int l) {
+		protected int id;
+		public Sound(int id,int s, int l) {
+			this.id = id;
 			if (s>0) startTime = s; // quietly force into the +ve domain 
 			length = l;
 			}
-		// @TODO: some kind of association with the underlying sound playback
 		public int getStartTime() {	return startTime; }
 		public int getEndTime()   { return startTime+length; }
 		public int getLength()  { return length; }

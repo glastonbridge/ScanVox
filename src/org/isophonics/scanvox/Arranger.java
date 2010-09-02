@@ -28,6 +28,8 @@ import android.widget.Toast;
 public class Arranger extends View {
 	private static final String TAG = "Arranger";
 	
+	private static final int bufferDuration = 8000; // ms
+	
 	/** Paint objects for styling various parts of the Arranger */
 	public Paint 
 		backgroundPaint, 
@@ -44,6 +46,7 @@ public class Arranger extends View {
 	public int ticksPerDivision = 4;
 	private int height = 320; // will be updated later
 	private Dashboard dashboard;
+	private SoundManager soundManager;
 	
 	protected Arrangement arrangement=new Arrangement(0);
 	
@@ -90,6 +93,14 @@ public class Arranger extends View {
 		arrangement = a;
 		pixelsPerAudioTick = getWidth()/arrangement.length;
 		Log.d(TAG,"Setting pixels per audio tick to "+pixelsPerAudioTick);
+	}
+	
+	/**
+	 * Set the sound manager to notify
+	 * 
+	 */
+	public void setSoundManager(SoundManager s) {
+		soundManager = s;
 	}
 	
 	private Sound soundBeingMoved = null;
@@ -178,6 +189,8 @@ public class Arranger extends View {
     };
 
 	
+    private long lastUpdateTime = 0;
+    
 	/**
 	 * The cases we want to consider are:
 	 * 
@@ -188,6 +201,11 @@ public class Arranger extends View {
 	 */
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		// Force frame limiting
+		long now = System.currentTimeMillis();
+		if (now<lastUpdateTime+50 && event.getAction() ==MotionEvent.ACTION_MOVE) return true;
+		lastUpdateTime = now;
+		
 		if (event.getAction()==MotionEvent.ACTION_DOWN) {
 			if ( soundBeingMoved != null ) {
 				// Sanity check, we should never have an action down before a previous action up
@@ -208,10 +226,16 @@ public class Arranger extends View {
 					return true;
 				}
 			} 
+			// DASHBOARD FUNCTIONS
 			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
 			if (buttonId != -1) {
-				if (buttonId == Dashboard.recordId) dashboard.startProgressBar(2000,mRedrawHandler);
-				mRedrawHandler.sleep(50);
+				if (buttonId == Dashboard.recordId) {
+					if(soundManager!=null && soundManager.recordNew(bufferDuration, mySac) !=-1) {
+						dashboard.startProgressBar(bufferDuration,mRedrawHandler);
+					}
+				} else if (buttonId == Dashboard.trashId) {
+					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT);
+				}
 			}
 		} else if (event.getAction()==MotionEvent.ACTION_MOVE) {
 			soundBeingMovedX = event.getX() - soundBeingMovedHandleX;
@@ -219,6 +243,14 @@ public class Arranger extends View {
 			invalidate();
 			return true;
 		} else if (event.getAction()==MotionEvent.ACTION_UP && soundBeingMoved != null) {
+			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
+			if (buttonId == Dashboard.trashId) {
+				soundManager.removeSound(soundBeingMoved.id);
+				soundBeingMoved = null;
+				invalidate();
+				return true;
+			}
+		
 			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, soundBeingMoved)
 			 && !soundBeingMovedOldHome.add(soundBeingMoved))
 				Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
@@ -228,6 +260,15 @@ public class Arranger extends View {
 		}
 		return false;
 	}
+	
+	protected SoundManager.SoundAddedCallback mySac = new SoundManager.SoundAddedCallback() {
+		public void whenSoundAdded(int id) {
+			int rowNum = id; // @HACK: what if we want to squeeze in more sounds?
+			if (arrangement.rows.size() <= rowNum) return;
+			Arrangement.Row row = arrangement.rows.get(rowNum);
+			row.add (new Sound (id, 0, 1));
+		}
+	};
 	
 	/** 
 	 * Push a sound (back) into the world of rows
@@ -240,7 +281,7 @@ public class Arranger extends View {
 		int rowNum = (int) (y / rowHeight);
 		if (arrangement.rows.size() <= rowNum) return false;
 		Arrangement.Row row = arrangement.rows.get(rowNum);
-		return row.add (new Sound ((int)(x/pixelsPerAudioTick),s.getLength()));
+		return row.add (new Sound (s.id,(int)(x/pixelsPerAudioTick),s.getLength()));
 	}
 	
 }
