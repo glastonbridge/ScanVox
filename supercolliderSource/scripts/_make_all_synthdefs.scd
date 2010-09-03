@@ -12,10 +12,10 @@ if(\FeatureSet1.asClass.isNil){
 	};
 	
 	// now copy the resulting synthdefs into the assets
-	("cd % && cp _scanvox*.scsyndef"
+	("cd % && for f in _scanvox*.scsyndef"
 		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
-		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef"
-		+ "%/assets")
+		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef;"
+		+ "do cp $f %/assets/m$f; done")
 		.format(SynthDef.synthDefDir.quote, ~dir.dirname.dirname.quote)
 		.postln.unixCmd;
 	
