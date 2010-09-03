@@ -12,7 +12,7 @@ if(\FeatureSet1.asClass.isNil){
 	};
 	
 	// generate some java files
-	MappedSynth1.genJava(~dir.dirname.dirname +/+ "gen/")
+	MappedSynth1.genJava(~dir.dirname.dirname +/+ "gen/");
 	
 	// now copy the resulting synthdefs into the assets
 	("cd % && for f in _scanvox*.scsyndef"
