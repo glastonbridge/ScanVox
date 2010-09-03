@@ -6,8 +6,8 @@ package org.isophonics.scanvox;
 * will be auto-generated from SuperCollider code so as to 
 * pass details through from the synthdef-generation to the Java.
 */
-abstract class MappedSynth {
-	public abstract static int getNumControls();
-	public abstract static int getParamShouldBePitch();
-	public abstract static String getLabel();
+public abstract class MappedSynth {
+	public abstract int getNumControls();
+	public abstract int getParamShouldBePitch();
+	public abstract String getLabel();
 }
