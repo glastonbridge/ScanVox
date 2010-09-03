@@ -21,4 +21,20 @@ public abstract class MappedSynth {
 	 * User-visible name for the synth. Short, fun, mysterious, intriguing, pithy, full of character.
 	 */
 	public abstract String getLabel();
+	/**
+	 * In reality this is the 'old' class name, used in the AIFF data file paths to distinguish the maps for the different synth sounds
+	 */
+	public abstract String getBufFileNameRoot();
+	/**
+	 * the filename for the "tree" data to be used by PlaneTree
+	 */
+	public String getTreeFileName(){
+		return ("mixedvoicedata_" + getBufFileNameRoot() + "_tcbuf_d5m12p99.0.aiff");
+	}
+	/**
+	 * the filename for the "reverse map" data to be indexed into by the output of PlaneTree
+	 */
+	public String getTrevmapFileName(){
+		return ("mixedvoicedata_" + getBufFileNameRoot() + "_tcbuf_d5m12p99.trevmap1.aiff");
+	}
 }
