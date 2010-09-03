@@ -58,3 +58,6 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 	}).writeDefFile;
 
 };
+
+
+"rec-play.scd done".postln;

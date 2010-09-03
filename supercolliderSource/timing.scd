@@ -14,3 +14,4 @@ SynthDef("clockodile",{ arg out=0, rate=1;
        Out.kr(out, sig);
 }).writeDefFile;
 
+"timing.scd done".postln;
