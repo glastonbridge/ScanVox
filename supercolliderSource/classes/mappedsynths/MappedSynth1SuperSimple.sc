@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 MappedSynth1SuperSimple : MappedSynth1 {
 /*
 s.waitForBoot{MappedSynth1SuperSimple.new.wander}

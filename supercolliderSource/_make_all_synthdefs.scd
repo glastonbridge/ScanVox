@@ -12,7 +12,12 @@ if(\FeatureSet1.asClass.isNil){
 	};
 	
 	// now copy the resulting synthdefs into the assets
-	"cp %_scanvox*.scsyndef %/assets".format(SynthDef.synthDefDir.quote, ~dir.dirname.quote).postln.unixCmd;
+	("cd % && cp _scanvox*.scsyndef"
+		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
+		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef"
+		+ "%/assets")
+		.format(SynthDef.synthDefDir.quote, ~dir.dirname.quote)
+		.postln.unixCmd;
 	
 	
 	
@@ -20,5 +25,4 @@ if(\FeatureSet1.asClass.isNil){
 	//if(Platform.ideName.postln == "none"){ 
 	//	exit(0) ;
 	//};
-	
 }

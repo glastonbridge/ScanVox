@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 // NOTE: 8 continuous params gives so many combinations (20**8) that it's greater than SC's integer size limit. 
 // Therefore I've pulled back to 7 params.
 MappedSynth1Gendy1 : MappedSynth1 {

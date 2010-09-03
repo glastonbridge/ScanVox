@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 MappedSynth1 : MappedSource1 {
 /* ABSTRACT CLASS
 Like MappedSource1, but represents a source we're generating ourselves, and so we can know what the control parameters are.

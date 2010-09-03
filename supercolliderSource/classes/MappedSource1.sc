@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 MappedSource1 {
 /*
 See also

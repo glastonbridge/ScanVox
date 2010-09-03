@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 MappedSynth1Moogy1 : MappedSynth1 {
 /*
 s.waitForBoot{MappedSynth1Moogy1.new.wander}

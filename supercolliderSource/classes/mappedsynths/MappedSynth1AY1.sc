@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 MappedSynth1AY1 : MappedSynth1 {
 /*
 s.waitForBoot{MappedSynth1AY1.new.wander}

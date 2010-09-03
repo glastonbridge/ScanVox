@@ -1,3 +1,6 @@
+/**
+* (c) 2010 Dan Stowell. Released under the GPLv3.
+*/
 /*
 Re-usable lists of features for computation in Synth graphs
 */
