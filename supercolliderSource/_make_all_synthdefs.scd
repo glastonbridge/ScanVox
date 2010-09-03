@@ -1,5 +1,5 @@
 
-~dir = thisProcess.nowExecutingPath.dirname;
+~dir = thisProcess.nowExecutingPath.standardizePath.dirname;
 
 // execute the code
 ["rec-play", "timing"].do{|which|
