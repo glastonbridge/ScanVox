@@ -1,17 +1,24 @@
 
 ~dir = thisProcess.nowExecutingPath.standardizePath.dirname;
 
-// execute the code
-["rec-play", "timing"].do{|which|
-	(~dir +/+ which ++ ".scd").load
-};
-
-// now copy the resulting synthdefs into the assets
-"cp %_scanvox*.scsyndef %/assets".format(SynthDef.synthDefDir.quote, ~dir.dirname.quote).postln.unixCmd;
-
-
-
-// quit if called from bare sclang
-//if(Platform.ideName.postln == "none"){ 
-//	exit(0) ;
-//};
+if(\FeatureSet1.asClass.isNil){
+	"ERROR in % : Scanvox classes not in the classpath (FeatureSet1 not found).".format(thisProcess.nowExecutingPath).postln;
+	exit(1);
+}{
+	
+	// execute the code
+	["rec-play", "timing"].do{|which|
+		(~dir +/+ which ++ ".scd").load
+	};
+	
+	// now copy the resulting synthdefs into the assets
+	"cp %_scanvox*.scsyndef %/assets".format(SynthDef.synthDefDir.quote, ~dir.dirname.quote).postln.unixCmd;
+	
+	
+	
+	// quit if called from bare sclang
+	//if(Platform.ideName.postln == "none"){ 
+	//	exit(0) ;
+	//};
+	
+}
