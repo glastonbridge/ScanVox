@@ -16,7 +16,7 @@ if(\FeatureSet1.asClass.isNil){
 		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
 		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef"
 		+ "%/assets")
-		.format(SynthDef.synthDefDir.quote, ~dir.dirname.quote)
+		.format(SynthDef.synthDefDir.quote, ~dir.dirname.dirname.quote)
 		.postln.unixCmd;
 	
 	
