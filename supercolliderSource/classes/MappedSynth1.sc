@@ -257,4 +257,32 @@ MappedSynth1Gendy1.numSettings.do{|i| MappedSynth1Gendy1.settingsFromIndex(i).po
 */
 } // end *writeMappedSynth1SynthDefs
 
+
+// Generates Java class files
+/*
+MappedSynth1.genJava("/Users/danstowell/dev/ScanVox/gen/")
+*/
+*genJava{|path|
+	var fp;
+	this.subclasses.do{|cl|
+		fp = File(path +/+ "org/isophonics/scanvox/" ++ cl.name ++ ".java", "w");
+		fp.write(cl.asJavaClassString);
+		fp.flush.close;
+	}
+}
+
+*asJavaClassString {
+	^"
+		/* Auto-generated file */
+		package org.isophonics.scanvox;
+		
+		public static final class % extends MappedSynth {
+			public static final int getNumControls(){ return %; }
+			public static final int getParamShouldBePitch(){ return %; }
+			public static final String getLabel(){ return %; }
+		}
+	".format(this.name, this.synthDefParams.size, this.paramShouldBePitch,
+		this.name.asString[12..].replace("1", "").quote)
+}
+
 }// end class

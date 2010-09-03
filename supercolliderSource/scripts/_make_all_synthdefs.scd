@@ -11,6 +11,9 @@ if(\FeatureSet1.asClass.isNil){
 		(~dir +/+ which ++ ".scd").load
 	};
 	
+	// generate some java files
+	MappedSynth1.genJava(~dir.dirname.dirname +/+ "gen/")
+	
 	// now copy the resulting synthdefs into the assets
 	("cd % && for f in _scanvox*.scsyndef"
 		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
