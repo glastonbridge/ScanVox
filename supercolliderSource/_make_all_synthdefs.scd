@@ -2,7 +2,7 @@
 ~dir = thisProcess.nowExecutingPath.standardizePath.dirname;
 
 if(\FeatureSet1.asClass.isNil){
-	"ERROR in % : Scanvox classes not in the classpath (FeatureSet1 not found).".format(thisProcess.nowExecutingPath).postln;
+	"ERROR in %: Scanvox classes not in the classpath (FeatureSet1 not found).".format(thisProcess.nowExecutingPath).postln;
 	exit(1);
 }{
 	
