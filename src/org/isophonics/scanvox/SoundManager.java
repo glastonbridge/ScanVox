@@ -20,7 +20,7 @@ import net.sf.supercollider.android.ScService;
  *
  */
 public class SoundManager {
-	public static final long bufferSize = SCAudio.sampleRateInHz*2; // @TODO: magic number
+	public long bufferSize = SCAudio.sampleRateInHz*2; // @TODO: magic number
 	private static final String TAG = "SoundManager";
     protected SCAudio superCollider;
     protected Vector<Integer> bufferIDs = new Vector<Integer>();
