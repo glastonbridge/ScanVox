@@ -176,7 +176,7 @@ public class SoundManager {
 				"s_new","default",synthNodeForId(lastBufferId), addToTail, playersGroupNode
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
-				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,4
+				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,synthType.getNumControls()
 			});
 			lastBusId += synthType.getNumControls();
 			Log.d(TAG,playMsg.toString());
