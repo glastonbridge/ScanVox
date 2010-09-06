@@ -263,9 +263,11 @@ MappedSynth1Gendy1.numSettings.do{|i| MappedSynth1Gendy1.settingsFromIndex(i).po
 MappedSynth1.genJava("/Users/danstowell/dev/ScanVox/gen/")
 */
 *genJava{|path|
-	var fp;
+	var fp, fullpath;
+	fullpath = path.standardizePath +/+ "org/isophonics/scanvox/";
+	("mkdir -p" + fullpath.quote).postln.systemCmd;
 	this.subclasses.do{|cl|
-		fp = File(path +/+ "org/isophonics/scanvox/" ++ cl.name ++ ".java", "w");
+		fp = File(fullpath ++ cl.name ++ ".java", "w");
 		fp.write(cl.asJavaClassString);
 		fp.flush.close;
 	}
