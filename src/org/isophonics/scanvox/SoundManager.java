@@ -26,6 +26,11 @@ import net.sf.supercollider.android.ScService;
 public class SoundManager {
 	public static final long bufferSize = SCAudio.sampleRateInHz*2; // @TODO: magic number
 	private static final String TAG = "SoundManager";
+	private static final int addToHead = 0;
+	private static final int addToTail = 1;
+	private static final int addBefore = 2;
+	private static final int addAfter  = 3;
+	private static final int addReplace= 4;
     protected SCAudio superCollider;
     protected Vector<Integer> bufferIDs = new Vector<Integer>();
     protected int lastBufferId = -1; // NB: !== bufferIDs.size()-1, due to possible deletions
@@ -67,9 +72,9 @@ public class SoundManager {
     
     private void initialise() {
     	superCollider.sendMessage(new OscMessage( new Object[] {
-    			"s_new","clockodile", clockNode, 0, 1, "out", beatBus}));
+    			"s_new","clockodile", clockNode, addToHead, 1, "out", beatBus}));
     	superCollider.sendMessage(new OscMessage( new Object[] {
-    			"g_new", playersGroupNode, 1, 1}));
+    			"g_new", playersGroupNode, addToTail, 1}));
     }
 
     /**
@@ -96,7 +101,7 @@ public class SoundManager {
     		return -1;
     	}
     	OscMessage recordMsg = new OscMessage( new Object[] {
-    	    "s_new","_scanvox_rec",recordNodeForId(lastBufferId),0,1,"timbrebuf",lastBufferId
+    	    "s_new","_scanvox_rec",recordNodeForId(lastBufferId),addToHead,1,"timbrebuf",lastBufferId
     	});
     	Log.d(TAG,recordMsg.toString());
     	superCollider.sendMessage( recordMsg );
@@ -157,7 +162,7 @@ public class SoundManager {
 				return;
 			}
 			OscMessage playMsg = new OscMessage( new Object[] {
-	    	    "s_new",playController,playNodeForId(lastBufferId),0,playersGroupNode,
+	    	    "s_new",playController,playNodeForId(lastBufferId), addToHead, playersGroupNode,
 	    	    "timbrebuf"    ,lastBufferId,
 	    	    "controlsbus",lastBusId,
 	    	    "paramShouldBePitch",synthType.getParamShouldBePitch(),
@@ -168,7 +173,7 @@ public class SoundManager {
 				"n_map",playNodeForId(lastBufferId),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
-				"s_new","default",synthNodeForId(lastBufferId),1,playersGroupNode
+				"s_new","default",synthNodeForId(lastBufferId), addToTail, playersGroupNode
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
 				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,4
