@@ -26,7 +26,7 @@ if(\FeatureSet1.asClass.isNil){
 	
 	
 	// quit if called from bare sclang
-	//if(Platform.ideName.postln == "none"){ 
-	//	exit(0) ;
-	//};
+	if(Platform.ideName.postln == "none"){ 
+		exit(0) ;
+	};
 }
