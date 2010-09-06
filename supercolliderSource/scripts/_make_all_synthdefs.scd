@@ -8,14 +8,17 @@ if(\FeatureSet1.asClass.isNil){
 }{
 	
 	// execute the code
+	"Generating SynthDefs".postln;
 	["rec-play", "timing"].do{|which|
 		(~dir +/+ which ++ ".scd").load
 	};
 	
 	// generate some java files
+	"Generating Java files".postln;
 	MappedSynth1.genJava(~dir.dirname.dirname +/+ "gen/");
 	
 	// now copy the resulting synthdefs into the assets
+	"Copying synthdefs into assets folder".postln;
 	("cd % && for f in _scanvox*.scsyndef"
 		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
 		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef;"
@@ -23,9 +26,8 @@ if(\FeatureSet1.asClass.isNil){
 		.format(SynthDef.synthDefDir.quote, ~dir.dirname.dirname.quote)
 		.postln.unixCmd;
 	
-	
-	
 	// quit if called from bare sclang
+	"% is finished. Exiting.".format(thisProcess.nowExecutingPath.basename).postln;
 	if(Platform.ideName.postln == "none"){ 
 		exit(0) ;
 	};
