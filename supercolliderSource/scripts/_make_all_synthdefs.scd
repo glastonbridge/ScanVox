@@ -1,3 +1,4 @@
+#!/usr/bin/env sclang
 
 ~dir = thisProcess.nowExecutingPath.standardizePath.dirname;
 
