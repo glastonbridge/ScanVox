@@ -28,7 +28,8 @@ public class Dashboard extends Drawable {
 	private Arranger.RefreshHandler refreshHandler;
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
-	public Bitmap[] buttonImages = new Bitmap[2];
+	public Bitmap[] buttonImages = new Bitmap[2]; // The currently-visible buttons
+	private Bitmap stopButton, recButton; // buttonImages 
 	
 	public Dashboard(Context c) {	
 
@@ -37,6 +38,8 @@ public class Dashboard extends Drawable {
 		
 		buttonImages[trashId]  = BitmapFactory.decodeResource(c.getResources(), R.drawable.bin);
 		buttonImages[recordId] = BitmapFactory.decodeResource(c.getResources(), R.drawable.rec_sq);
+		recButton = buttonImages[recordId];
+		stopButton = BitmapFactory.decodeResource(c.getResources(), R.drawable.stop);
 
 		buttonHeight     = buttonImages[0].getHeight();
 		buttonWidth      = buttonImages[0].getWidth();		
@@ -47,7 +50,7 @@ public class Dashboard extends Drawable {
 		height = canvas.getHeight();
 		if (isRecording) {
 			long amountRecorded = System.currentTimeMillis()-recordStarted;
-			if (amountRecorded>recordTime) isRecording= false; // @TODO: temporary measure, shouldn't be doing control stuff here
+			if (amountRecorded>recordTime) stopRecording();
 			Paint recordPaint = new Paint();
 			recordPaint.setColor(0xFF440000);
 			canvas.drawRect(0,(float) (height-2.5*buttonHeight),canvas.getWidth()*amountRecorded/recordTime, height - 2* buttonHeight, recordPaint);
@@ -62,10 +65,11 @@ public class Dashboard extends Drawable {
 	 * 
 	 * @param duration
 	 */
-	public void startProgressBar(long duration, Arranger.RefreshHandler refreshHandler) {
+	public void startRecording(long duration, Arranger.RefreshHandler refreshHandler) {
 		recordTime = duration;
 		recordStarted = System.currentTimeMillis();
 		isRecording = true;
+		buttonImages[recordId] = stopButton;
 		this.refreshHandler = refreshHandler;
 		refreshHandler.sleep(50);
 	}
@@ -101,4 +105,9 @@ public class Dashboard extends Drawable {
 	public void setAlpha(int alpha) {}
 	@Override
 	public void setColorFilter(ColorFilter cf) {}
+
+	public void stopRecording() { 
+		isRecording= false; 
+		buttonImages[recordId] = recButton;
+	}
 }
