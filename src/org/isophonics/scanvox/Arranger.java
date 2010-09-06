@@ -13,22 +13,27 @@ import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Toast;
 
 /**
  * Shows the arrangement on-screen, lets the user move the bars around,
- * and updates during playback.  This is the visual side, Arrangement is
- * the data.
+ * and updates during playback.
  * 
- * @author alex shaw
+ * Key responsibilities of this class:
+ *  - Visualise an Arrangement
+ *  - When any interaction occurs, notify and update:
+ *     -- Dashboard
+ *     -- SoundManager
+ *     -- Arrangement
+ * @TODO: Split this class out into individual responsibilities
+ * 
+ * @author Alex Shaw
  */
 public class Arranger extends View {
 	private static final String TAG = "Arranger";
 	
-	private static final int bufferDuration = 8000; // ms
+	private static final int bufferDuration = 2000; // ms
 	
 	/** Paint objects for styling various parts of the Arranger */
 	public Paint 
@@ -230,11 +235,14 @@ public class Arranger extends View {
 			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
 			if (buttonId != -1) {
 				if (buttonId == Dashboard.recordId) {
-					if(soundManager!=null && soundManager.recordNew(bufferDuration, mySac) !=-1) {
-						dashboard.startProgressBar(bufferDuration,mRedrawHandler);
+					if (soundManager.recording) {
+						soundManager.stopRecording();
+						dashboard.stopRecording();
+					} if(soundManager!=null && soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1()) !=-1) {
+						dashboard.startRecording(bufferDuration,mRedrawHandler);
 					}
 				} else if (buttonId == Dashboard.trashId) {
-					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT);
+					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT).show();
 				}
 			}
 		} else if (event.getAction()==MotionEvent.ACTION_MOVE) {
@@ -261,14 +269,20 @@ public class Arranger extends View {
 		return false;
 	}
 	
-	protected SoundManager.SoundAddedCallback mySac = new SoundManager.SoundAddedCallback() {
+	private class UpdateArrangerCallback implements SoundManager.SoundAddedCallback {
+		private Arranger parent;
+		public UpdateArrangerCallback(Arranger parent) {this.parent = parent;}
 		public void whenSoundAdded(int id) {
 			int rowNum = id; // @HACK: what if we want to squeeze in more sounds?
 			if (arrangement.rows.size() <= rowNum) return;
 			Arrangement.Row row = arrangement.rows.get(rowNum);
 			row.add (new Sound (id, 0, 1));
+			if (parent != null) parent.mRedrawHandler.sleep(1);
 		}
-	};
+		
+	}
+	
+	protected SoundManager.SoundAddedCallback mySac = new UpdateArrangerCallback( this ) ;
 	
 	/** 
 	 * Push a sound (back) into the world of rows
@@ -276,12 +290,17 @@ public class Arranger extends View {
 	 * @param y
 	 * @return true on success
 	 */
-	private boolean addSoundAt(float x, float y, Sound s) {
+	private boolean addSoundAt (float x, float y, Sound s) {
 		Log.d(TAG,"Adding sound at "+x+","+y);
 		int rowNum = (int) (y / rowHeight);
 		if (arrangement.rows.size() <= rowNum) return false;
 		Arrangement.Row row = arrangement.rows.get(rowNum);
-		return row.add (new Sound (s.id,(int)(x/pixelsPerAudioTick),s.getLength()));
+		Sound updatedSound = new Sound (s.id,(int)(x/pixelsPerAudioTick),s.getLength());
+		boolean couldAddSound = row.add (updatedSound);
+		if (couldAddSound) {
+			soundManager.setSoundStart(updatedSound.id,(int)(x/pixelsPerAudioTick));
+		}
+		return couldAddSound;
 	}
 	
 }

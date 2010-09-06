@@ -6,16 +6,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.isophonics.scanvox.Arrangement.Row;
-import org.isophonics.scanvox.Arrangement.Sound;
-
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import net.sf.supercollider.android.OscMessage;
 import net.sf.supercollider.android.SCAudio;
 import net.sf.supercollider.android.ScService;
@@ -26,13 +24,35 @@ public class ScanVox extends Activity {
 		WELCOME, RECORDING, ARRANGING
 	}
 	
+	public static final String scanvoxTreeDirectory ="scanvox/treeData/";
+	
+	public static final String[] mySynthDefs = {
+		"clockodile.scsyndef",
+		"_scanvox_playcontrols1.scsyndef",
+		"_scanvox_playcontrols2.scsyndef",
+		"_scanvox_playcontrols3.scsyndef",
+		"_scanvox_playcontrols4.scsyndef",
+		"_scanvox_playcontrols5.scsyndef",
+		"_scanvox_playcontrols6.scsyndef",
+		"_scanvox_playcontrols7.scsyndef",
+		"_scanvox_playcontrols8.scsyndef",
+		"_scanvox_playcontrols9.scsyndef",
+		"_scanvox_rec.scsyndef",
+		"_maptsyn_ay1.scsyndef"
+	};
+	
+	public static final String[] myTreeFiles = {
+		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.0.aiff",
+		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.trevmap1.aiff"
+	};
+	
 	SCAudio superCollider = new SCAudio(dllDirStr);
 	
 	public static final int numberOfRows = 10;
 	private static final String TAG = "ScanVox";
 	
 	protected Arrangement arrangement = new Arrangement(numberOfRows);
-	protected SoundManager soundManager = new SoundManager(superCollider); 
+	protected SoundManager soundManager = null; 
 	
 	/**
 	 * Change the application state to allow the user to do something
@@ -59,7 +79,8 @@ public class ScanVox extends Activity {
 			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
 			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));
 			arranger.setArrangement(arrangement);
-			arranger.setSoundManager(soundManager);
+			if (soundManager != null ) arranger.setSoundManager(soundManager);
+			else (Toast.makeText(this, "Something is wrong, there is no sound manager", Toast.LENGTH_LONG)).show();
 			break;
 		case ARRANGING:
 			break;
@@ -75,17 +96,28 @@ public class ScanVox extends Activity {
 
     		File dataDir = new File(ScService.dataDirStr);
     		dataDir.mkdirs(); 
-    		pipeFile("clockodile.scsyndef",ScService.dataDirStr);
-    		pipeFile("recordbuffer.scsyndef",ScService.dataDirStr);
-			pipeFile("playbuffer.scsyndef",ScService.dataDirStr);
+    		for (String synthdef : mySynthDefs )
+    			pipeFile(synthdef, ScService.dataDirStr);
+    		File sndDir = new File(Environment.getExternalStorageDirectory(),scanvoxTreeDirectory);
+    		sndDir.mkdirs();
+    		for (String tree : myTreeFiles)
+    			pipeFile(tree,sndDir.getAbsolutePath());
 		} catch (IOException e) {
-			Log.e(TAG,"Couldn't copy synths to the synthdef directory.");
+			Log.e(TAG,"Couldn't copy required files to the external storage device.");
+			e.printStackTrace();
+		}
+		
+		try {
+			for (String ass : getAssets().list("")) Log.d("TAG",String.format("Asset: '%s'",ass));
+		} catch (IOException e) {
+			Log.e(TAG,"Couldn't even LIST assets :(");
 			e.printStackTrace();
 		}
 
         // /test data
-        superCollider.openUDP(57110);
+        //superCollider.openUDP(57110);
         superCollider.start();
+        soundManager = new SoundManager(superCollider);
         setUserActivity(UserActivity.RECORDING);
     }
     
@@ -113,8 +145,11 @@ public class ScanVox extends Activity {
      * @throws IOException
      */
 	protected void pipeFile(String assetName, String targetDir) throws IOException {
-		InputStream is = getAssets().open(assetName);
-		OutputStream os = new FileOutputStream(targetDir+"/"+assetName);
+		InputStream is;
+		if (assetName.startsWith("_")) is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _
+		else is = getAssets().open(assetName);
+		File target = new File(targetDir,assetName);
+		OutputStream os = new FileOutputStream(target);
 		byte[] buf = new byte[1024];
 		int bytesRead = 0;
 		while (-1 != (bytesRead = is.read(buf))) {
