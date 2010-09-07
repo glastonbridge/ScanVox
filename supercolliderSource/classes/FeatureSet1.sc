@@ -15,11 +15,16 @@ FeatureSet1 {
 ^this.new({
 	|chain, source|
 	var pitch, zcr, pciles,
-			pow, flatness, centroid, bandpows;
+			pow, amp, flatness, centroid, bandpows;
 	
+	// the amplitude tracker wants to converge at the same kind of rate as the size of half an fft window
+	var convergetime = SampleDur.ir * (MappedSource1.fftsize / 2);
+	"convergetime is %".format(convergetime).postln;
+
 	// Now perform all our analyses
 	pitch    = Pitch.kr(source, execFreq: 250).at(0);
-	pow      = FFTPower.kr(chain);
+	//pow      = FFTPower.kr(chain);
+	amp      = A2K.kr(Amplitude.ar(source, convergetime, convergetime));
 	centroid = SpecCentroid.kr(chain);
 	flatness = SpecFlatness.kr(chain);
 	zcr      = A2K.kr(ZeroCrossing.ar(source));
@@ -28,12 +33,12 @@ FeatureSet1 {
  
 	
 	// Output:
-	// NB KEEP UN-NORMALISED [PITCH, POW] FIRST
-	([pitch, pow, centroid, flatness, zcr] ++ pciles)
+	// NB KEEP UN-NORMALISED [PITCH, AMP] FIRST
+	([pitch, amp, centroid, flatness, zcr] ++ pciles)
 	// with normalisation determined from mixedvoicedata:
 	* #[1.00000000, 1.00000000, 0.00098303, 21.14341256, 0.00063821, 0.00144387, 0.00035757]	- #[0.00000000, 0.00000000, 1.48499595, 1.23478075, 0.67746988, 0.59661832, 1.96464594]
 },
-	#["pitch", "pow", "centroid", "flatness", "zcr", "pcile25", "pcile95" /* , "pow1", "pow2", "pow3", "pow4", "pow5" */ ]
+	#["pitch", "amp", "centroid", "flatness", "zcr", "pcile25", "pcile95" /* , "pow1", "pow2", "pow3", "pow4", "pow5" */ ]
 		);
 }
 
