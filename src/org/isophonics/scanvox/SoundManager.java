@@ -37,9 +37,12 @@ public class SoundManager {
     protected int lastBufferId = -1; // NB: !== bufferIDs.size()-1, due to possible deletions
     protected static final int clockNode = 1990;
     protected static final int playersGroupNode = 1995;
-    protected static final int beatBus = 0;
-    protected int lastControlBusId = 1; // start at 1, don't clobber beatBus
-    protected int lastAudioBusId = 16; // start somewhere beyond the busses used for hardware i/o 
+    
+    private Allocator krBusAllocator = new NaiveAllocator(0);
+    private Allocator arBusAllocator = new NaiveAllocator(16); // start somewhere beyond the busses used for hardware i/o
+    
+    protected int beatBus;
+    
     private static int bufferChannelsDefault = 7; 
     protected boolean recording = false;
     private static Hashtable<String,Integer> treeBufferIds = new Hashtable<String,Integer>();
@@ -49,6 +52,15 @@ public class SoundManager {
     	initialise();
     }
     
+    private void initialise() {
+    	beatBus = krBusAllocator.nextID();
+    	
+    	superCollider.sendMessage(new OscMessage( new Object[] {
+    			"s_new","clockodile", clockNode, addToHead, 1, "out", beatBus}));
+    	superCollider.sendMessage(new OscMessage( new Object[] {
+    			"g_new", playersGroupNode, addToTail, 1}));
+    }
+
     /**
      * Finds or loads the requested buffer of tree data.  
      */
@@ -71,13 +83,6 @@ public class SoundManager {
     	}
     }
     
-    private void initialise() {
-    	superCollider.sendMessage(new OscMessage( new Object[] {
-    			"s_new","clockodile", clockNode, addToHead, 1, "out", beatBus}));
-    	superCollider.sendMessage(new OscMessage( new Object[] {
-    			"g_new", playersGroupNode, addToTail, 1}));
-    }
-
     /**
      * Create a buffer of the requested size, and fill it with audio from the mic.
      * Add it to the loop as soon as it's done.
@@ -150,8 +155,9 @@ public class SoundManager {
 		if (!recording) return;
 		try {
 			String playController;
-			int curAmpBus         = lastControlBusId;
-			int mappedControlsBus = lastControlBusId+1;
+			int curAmpBus         = krBusAllocator.nextID();
+			int mappedControlsBus = krBusAllocator.nextIDs(synthType.getNumControls());
+			int curAudioBus       = arBusAllocator.nextID();
 			playController = "_scanvox_playcontrols" + synthType.getNumControls();
 			Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", synthType.getLabel(), playController));
 			OscMessage playMsg = new OscMessage( new Object[] {
@@ -168,7 +174,7 @@ public class SoundManager {
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
 				"s_new","_maptsyn_ay1",synthNodeForId(lastBufferId), addToTail, playersGroupNode,
-	    	    "out",         lastAudioBusId,
+	    	    "out",         curAudioBus,
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
 				"n_mapn",synthNodeForId(lastBufferId),2,mappedControlsBus,synthType.getNumControls()
@@ -178,12 +184,12 @@ public class SoundManager {
 			// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
 			OscMessage ampMatchMsg = new OscMessage( new Object[] {
 		    	    "s_new","_scanvox_ampmatch",ampMatchNodeForId(lastBufferId), addAfter, synthNodeForId(lastBufferId),
-		    	    "soundsource",         lastAudioBusId,
+		    	    "soundsource",         curAudioBus,
 		    	    "ampbus",      curAmpBus
 		    	});
 
-			lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
-			lastAudioBusId++;
+			//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
+			//rm lastAudioBusId++;
 			Log.d(TAG,playMsg.toString());
 	    	superCollider.sendMessage( playMsg );
 	    	superCollider.sendMessage( beatMap );
