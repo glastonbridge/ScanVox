@@ -20,6 +20,7 @@ if(\FeatureSet1.asClass.isNil){
 	// now copy the resulting synthdefs into the assets
 	"Copying synthdefs into assets folder".postln;
 	("cd % && for f in _scanvox*.scsyndef"
+		+ "clockodile.scsyndef"
 		+ "_maptsyn_supersimple.scsyndef _maptsyn_moogy1.scsyndef _maptsyn_gendy1.scsyndef"
 		+ "_maptsyn_ay1.scsyndef _maptsrc_ampmatch.scsyndef;"
 		+ "do cp $f %/assets/m$f; done")

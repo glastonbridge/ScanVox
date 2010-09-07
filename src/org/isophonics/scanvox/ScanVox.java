@@ -50,6 +50,8 @@ public class ScanVox extends Activity {
 	
 	public static final int numberOfRows = 10;
 	private static final String TAG = "ScanVox";
+
+	public static final long GRAPHIC_REFRESH_PERIOD = 150;
 	
 	protected Arrangement arrangement = new Arrangement(numberOfRows);
 	protected SoundManager soundManager = null; 
@@ -147,8 +149,7 @@ public class ScanVox extends Activity {
      */
 	protected void pipeFile(String assetName, String targetDir) throws IOException {
 		InputStream is;
-		if (assetName.startsWith("_")) is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _
-		else is = getAssets().open(assetName);
+		is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _
 		File target = new File(targetDir,assetName);
 		OutputStream os = new FileOutputStream(target);
 		byte[] buf = new byte[1024];
