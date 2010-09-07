@@ -177,10 +177,10 @@ public class ScanVox extends Activity {
 	protected void pipeFile(String assetName, String targetDir) throws IOException {
 		InputStream is;
 		AssetManager am = getAssets();
-		if (am.list(assetName).length == 0)
-			is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _ so they get prefixed with m
+		if (assetName.endsWith(".scsyndef"))
+			is = am.open("m"+assetName); // Android assets don't get copied out if they begin with _ so they get prefixed with m
 		else
-			is = getAssets().open(assetName);
+			is = am.open(assetName);
 		File target = new File(targetDir,assetName);
 		OutputStream os = new FileOutputStream(target);
 		byte[] buf = new byte[1024];
