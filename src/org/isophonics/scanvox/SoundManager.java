@@ -5,13 +5,11 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import android.os.Environment;
+//import android.os.Environment;
 import android.util.Log;
-import android.widget.Toast;
 
 import net.sf.supercollider.android.OscMessage;
 import net.sf.supercollider.android.SCAudio;
-import net.sf.supercollider.android.ScService;
 
 /**
  * Provides the glue between buffers in SuperCollider and sounds in the
@@ -28,8 +26,11 @@ public class SoundManager {
 	private static final String TAG = "SoundManager";
 	private static final int addToHead = 0;
 	private static final int addToTail = 1;
+	@SuppressWarnings("unused")
 	private static final int addBefore = 2;
+	@SuppressWarnings("unused")
 	private static final int addAfter  = 3;
+	@SuppressWarnings("unused")
 	private static final int addReplace= 4;
     protected SCAudio superCollider;
     protected Vector<Integer> bufferIDs = new Vector<Integer>();
@@ -38,9 +39,7 @@ public class SoundManager {
     protected static final int playersGroupNode = 1995;
     protected static final int beatBus = 0;
     protected int lastBusId = 0;
-    private static int bufferChannelsDefault = 7; 
-    private int treeBufId = -1;
-    private int trevBufId = -1;
+    private static int bufferChannelsDefault = 7;
     protected boolean recording = false;
     private static Hashtable<String,Integer> treeBufferIds = new Hashtable<String,Integer>();
     
@@ -164,7 +163,7 @@ public class SoundManager {
 				"n_map",playNodeForId(lastBufferId),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
-				"s_new","default",synthNodeForId(lastBufferId), addToTail, playersGroupNode
+				"s_new","_maptsyn_ay1",synthNodeForId(lastBufferId), addToTail, playersGroupNode
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
 				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,synthType.getNumControls()
@@ -221,7 +220,7 @@ public class SoundManager {
 	 */
 	public void setSoundStart(int id, int f) {
 		OscMessage startMessage = new OscMessage(new Object[] {
-				"n_set",id,"startTick",f
+				"n_set",playNodeForId(id),"myPhase",f
 		});
 		Log.d(TAG,startMessage.toString());
 		superCollider.sendMessage(startMessage);
