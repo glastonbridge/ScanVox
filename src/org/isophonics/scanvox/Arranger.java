@@ -208,7 +208,9 @@ public class Arranger extends View {
 	public boolean onTouchEvent(MotionEvent event) {
 		// Force frame limiting
 		long now = System.currentTimeMillis();
-		if (now<lastUpdateTime+50 && event.getAction() ==MotionEvent.ACTION_MOVE) return true;
+		if (now<lastUpdateTime+ScanVox.GRAPHIC_REFRESH_PERIOD
+				&& event.getAction() == MotionEvent.ACTION_MOVE) 
+			return true;
 		lastUpdateTime = now;
 		
 		if (event.getAction()==MotionEvent.ACTION_DOWN) {
@@ -300,6 +302,7 @@ public class Arranger extends View {
 		if (couldAddSound) {
 			soundManager.setSoundStart(updatedSound.id,(int)(x/pixelsPerAudioTick));
 		}
+		System.gc();
 		return couldAddSound;
 	}
 	
