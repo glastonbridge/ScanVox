@@ -37,7 +37,8 @@ public class SoundManager {
     protected static final int clockNode = 1990;
     protected static final int playersGroupNode = 1995;
     protected static final int beatBus = 0;
-    protected int lastBusId = 1; // start at 1, don't clobber beatBus
+    protected int lastControlBusId = 1; // start at 1, don't clobber beatBus
+    protected int lastAudioBusId = 16; // start somewhere beyond the busses used for hardware i/o 
     private static int bufferChannelsDefault = 7; 
     private int treeBufId = -1;
     private int trevBufId = -1;
@@ -150,31 +151,46 @@ public class SoundManager {
 		if (!recording) return;
 		try {
 			String playController;
+			int curAmpBus         = lastControlBusId;
+			int mappedControlsBus = lastControlBusId+1;
 			playController = "_scanvox_playcontrols" + synthType.getNumControls();
 			Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", synthType.getLabel(), playController));
 			OscMessage playMsg = new OscMessage( new Object[] {
 	    	    "s_new",playController,playNodeForId(lastBufferId), addToHead, playersGroupNode,
-	    	    "timbrebuf"    ,lastBufferId,
-	    	    "controlsbus",lastBusId,
+	    	    "timbrebuf",   lastBufferId,
+	    	    "ampbus",      curAmpBus,
+	    	    "controlsbus", mappedControlsBus,
 	    	    "paramShouldBePitch",synthType.getParamShouldBePitch(),
-	    	    "treebuf",treeBuffer(synthType.getTreeFileName()),
-	    	    "trevbuf",treeBuffer(synthType.getTrevmapFileName())
+	    	    "treebuf",     treeBuffer(synthType.getTreeFileName()),
+	    	    "trevbuf",     treeBuffer(synthType.getTrevmapFileName())
 	    	});
 			OscMessage beatMap = new OscMessage( new Object[] {
 				"n_map",playNodeForId(lastBufferId),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
-				"s_new","_maptsyn_ay1",synthNodeForId(lastBufferId), addToTail, playersGroupNode
+				"s_new","_maptsyn_ay1",synthNodeForId(lastBufferId), addToTail, playersGroupNode,
+	    	    "out",         lastAudioBusId,
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
-				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,synthType.getNumControls()
+				"n_mapn",synthNodeForId(lastBufferId),2,mappedControlsBus,synthType.getNumControls()
 			});
-			lastBusId += synthType.getNumControls();
+			
+			// create the amp mapping stuff using curAmpBus, before the increment happens
+			// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
+			OscMessage ampMatchMsg = new OscMessage( new Object[] {
+		    	    "s_new","_scanvox_ampmatch",ampMatchNodeForId(lastBufferId), addAfter, synthNodeForId(lastBufferId),
+		    	    "soundsource",         lastAudioBusId,
+		    	    "ampbus",      curAmpBus
+		    	});
+
+			lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
+			lastAudioBusId++;
 			Log.d(TAG,playMsg.toString());
 	    	superCollider.sendMessage( playMsg );
 	    	superCollider.sendMessage( beatMap );
 	    	superCollider.sendMessage( synthMessage );
 	    	superCollider.sendMessage( controlMap );
+	    	superCollider.sendMessage( ampMatchMsg );
 	    	//TODO - DEBUG, remove:
 	    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
 	    	sac.whenSoundAdded ( lastBufferId );
@@ -190,9 +206,10 @@ public class SoundManager {
 	 * id.  They are recorded in the following functions:
 	 * @return
 	 */
-	private int recordNodeForId(int id) {return OscMessage.defaultNodeId + 3*id;}
-	private int playNodeForId(int id) {return OscMessage.defaultNodeId + 3*id+1;}
-	private int synthNodeForId(int id) {return OscMessage.defaultNodeId + 3*id+2;}
+	private int recordNodeForId(int id) {return OscMessage.defaultNodeId   + 4*id  ;}
+	private int playNodeForId(int id) {return OscMessage.defaultNodeId     + 4*id+1;}
+	private int synthNodeForId(int id) {return OscMessage.defaultNodeId    + 4*id+2;}
+	private int ampMatchNodeForId(int id) {return OscMessage.defaultNodeId + 4*id+3;}
 	
 	/**
 	 * Lightweight interface to asynchronously let the caller know that
