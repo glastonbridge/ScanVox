@@ -1,5 +1,6 @@
 # ignore eclipse local config
 .settings/**/*
+ScanVoxSuperCollider
 # ignore paths to be generated during build
 assets/m_*.scsyndef
 bin/**/*
