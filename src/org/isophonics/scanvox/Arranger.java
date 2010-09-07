@@ -274,11 +274,17 @@ public class Arranger extends View {
 	private class UpdateArrangerCallback implements SoundManager.SoundAddedCallback {
 		private Arranger parent;
 		public UpdateArrangerCallback(Arranger parent) {this.parent = parent;}
-		public void whenSoundAdded(int id) {
-			int rowNum = id; // @HACK: what if we want to squeeze in more sounds?
-			if (arrangement.rows.size() <= rowNum) return;
-			Arrangement.Row row = arrangement.rows.get(rowNum);
-			row.add (new Sound (id, 0, 1));
+		public void whenSoundAdded(PlayingSound thisSynth) {
+			
+			for (int rowNum = 0; rowNum<arrangement.rows.size(); ++rowNum) {
+				// @HACK: what if we want to squeeze in more sounds?
+				Arrangement.Row row = arrangement.rows.get(rowNum);
+				if (row.isEmpty()) {
+					row.add (new Sound (thisSynth, 0, 1));
+					break;
+				}
+				
+			}
 			if (parent != null) parent.mRedrawHandler.sleep(1);
 		}
 		
@@ -302,7 +308,6 @@ public class Arranger extends View {
 		if (couldAddSound) {
 			soundManager.setSoundStart(updatedSound.id,(int)(x/pixelsPerAudioTick));
 		}
-		System.gc();
 		return couldAddSound;
 	}
 	
