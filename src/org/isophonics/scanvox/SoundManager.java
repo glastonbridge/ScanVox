@@ -37,7 +37,7 @@ public class SoundManager {
     protected static final int clockNode = 1990;
     protected static final int playersGroupNode = 1995;
     protected static final int beatBus = 0;
-    protected int lastBusId = 0;
+    protected int lastBusId = 1; // start at 1, don't clobber beatBus
     private static int bufferChannelsDefault = 7; 
     private int treeBufId = -1;
     private int trevBufId = -1;
@@ -164,7 +164,7 @@ public class SoundManager {
 				"n_map",playNodeForId(lastBufferId),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
-				"s_new","default",synthNodeForId(lastBufferId), addToTail, playersGroupNode
+				"s_new","_maptsyn_ay1",synthNodeForId(lastBufferId), addToTail, playersGroupNode
 			});
 			OscMessage controlMap = new OscMessage( new Object[] {
 				"n_mapn",synthNodeForId(lastBufferId),2,lastBusId,synthType.getNumControls()
@@ -175,6 +175,8 @@ public class SoundManager {
 	    	superCollider.sendMessage( beatMap );
 	    	superCollider.sendMessage( synthMessage );
 	    	superCollider.sendMessage( controlMap );
+	    	//TODO - DEBUG, remove:
+	    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
 	    	sac.whenSoundAdded ( lastBufferId );
 		} catch (IOException e) {
 			Log.e(TAG, String.format("Error loading tree buffer '%s'",e.getMessage()));
@@ -225,6 +227,8 @@ public class SoundManager {
 		});
 		Log.d(TAG,startMessage.toString());
 		superCollider.sendMessage(startMessage);
+    	//TODO - DEBUG, remove:
+    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
 	}
 
 	/**
