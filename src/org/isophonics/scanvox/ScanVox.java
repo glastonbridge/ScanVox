@@ -27,6 +27,7 @@ public class ScanVox extends Activity {
 	public static final String scanvoxTreeDirectory ="scanvox/treeData/";
 	
 	public static final String[] mySynthDefs = {
+		"_scanvox_rec.scsyndef",
 		"clockodile.scsyndef",
 		"_scanvox_playcontrols1.scsyndef",
 		"_scanvox_playcontrols2.scsyndef",
@@ -37,7 +38,7 @@ public class ScanVox extends Activity {
 		"_scanvox_playcontrols7.scsyndef",
 		"_scanvox_playcontrols8.scsyndef",
 		"_scanvox_playcontrols9.scsyndef",
-		"_scanvox_rec.scsyndef",
+		"_scanvox_ampmatch.scsyndef",
 		"_maptsyn_ay1.scsyndef"
 	};
 	
