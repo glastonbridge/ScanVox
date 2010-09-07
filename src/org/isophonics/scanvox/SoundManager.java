@@ -57,10 +57,11 @@ public class SoundManager {
     		return treeBufferIds.get(filename);
     	}
     	else {
-    		File treesDir = new File(Environment.getExternalStorageDirectory(),ScanVox.scanvoxTreeDirectory);
+    		File treesDir = new File("/sdcard/",ScanVox.scanvoxTreeDirectory);
+//    		File treesDir = new File(Environment.getExternalStorageDirectory(),ScanVox.scanvoxTreeDirectory);
     		File pathToTree = new File(treesDir,filename);
         	if(!sendOscAndWaitForDone(new OscMessage (new Object[] {
-        			"b_allocRead",++lastBufferId,pathToTree
+        			"b_allocRead",++lastBufferId,pathToTree.getAbsolutePath()
         	}))) {
         		Log.e(TAG,"Could not load rtree buffer");
         		throw new IOException(String.format("Could not fetch tree data file '%s'",filename));

@@ -98,7 +98,8 @@ public class ScanVox extends Activity {
     		dataDir.mkdirs(); 
     		for (String synthdef : mySynthDefs )
     			pipeFile(synthdef, ScService.dataDirStr);
-    		File sndDir = new File(Environment.getExternalStorageDirectory(),scanvoxTreeDirectory);
+    		File sndDir = new File("/sdcard/",scanvoxTreeDirectory);
+//    		File sndDir = new File(Environment.getExternalStorageDirectory(),scanvoxTreeDirectory);
     		sndDir.mkdirs();
     		for (String tree : myTreeFiles)
     			pipeFile(tree,sndDir.getAbsolutePath());
