@@ -7,12 +7,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.content.res.AssetManager;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
+//import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import net.sf.supercollider.android.OscMessage;
 import net.sf.supercollider.android.SCAudio;
@@ -21,7 +26,7 @@ import net.sf.supercollider.android.ScService;
 public class ScanVox extends Activity {
 	public static final String dllDirStr = "/data/data/org.isophonics.scanvox/lib"; // TODO: not very extensible, hard coded, generally sucks
 	public static enum UserActivity {
-		WELCOME, RECORDING, ARRANGING
+		WELCOME, RECORDING, ARRANGING, FATAL_ERROR
 	}
 	
 	public static final String scanvoxTreeDirectory ="scanvox/treeData/";
@@ -48,7 +53,7 @@ public class ScanVox extends Activity {
 	};
 	
 	SCAudio superCollider = new SCAudio(dllDirStr);
-	
+	protected String errorMessage = null;  // to throw a fatal error, populate this and call setUserActivity(FATAL_ERROR)
 	public static final int numberOfRows = 10;
 	private static final String TAG = "ScanVox";
 
@@ -57,6 +62,48 @@ public class ScanVox extends Activity {
 	protected Arrangement arrangement = new Arrangement(numberOfRows);
 	protected SoundManager soundManager = null; 
 	
+	private class ActivityChooser extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch((UserActivity)msg.obj) {
+    		case WELCOME:
+    	        setContentView(R.layout.welcome);
+    	        ImageButton rec = (ImageButton) findViewById(R.id.Record);
+    	        rec.setOnClickListener(new OnClickListener() {
+    				public void onClick(View v) {
+    					setUserActivity(UserActivity.RECORDING);
+    				}
+    	        });
+    			break;
+    		case RECORDING:
+    			setContentView(R.layout.arranger);
+    			Arranger arranger = (Arranger) findViewById(R.id.arranger);
+    			arranger.backgroundPaint.setColor(getResources().getColor(android.R.color.background_light));
+    			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
+    			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));
+    			arranger.setArrangement(arrangement);
+    			if (soundManager != null ) arranger.setSoundManager(soundManager);
+    			else (Toast.makeText(ScanVox.this, "Something is wrong, there is no sound manager", Toast.LENGTH_LONG)).show();
+    			break;
+    		case ARRANGING:
+    			break;
+    		case FATAL_ERROR:
+				setContentView(R.layout.fatal);
+				TextView content = (TextView) ScanVox.this.findViewById(R.id.content);
+				if (errorMessage != null ) content.setText(errorMessage);
+				Button quit = (Button) ScanVox.this.findViewById(R.id.Quit);
+				quit.setOnClickListener(new OnClickListener() {
+					public void onClick(View v) {
+						System.exit(0);
+					}
+				});
+				break;
+    		}
+        }
+    };
+
+    ActivityChooser activityChooser;
+    
 	/**
 	 * Change the application state to allow the user to do something
 	 * else.  This will update the visible content view as appropriate
@@ -65,29 +112,9 @@ public class ScanVox extends Activity {
 	 * @param s the new user activity
 	 */
 	public void setUserActivity(UserActivity s) {
-		switch(s) {
-		case WELCOME:
-	        setContentView(R.layout.welcome);
-	        ImageButton rec = (ImageButton) findViewById(R.id.Record);
-	        rec.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					setUserActivity(UserActivity.RECORDING);
-				}
-	        });
-			break;
-		case RECORDING:
-			setContentView(R.layout.arranger);
-			Arranger arranger = (Arranger) findViewById(R.id.arranger);
-			arranger.backgroundPaint.setColor(getResources().getColor(android.R.color.background_light));
-			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
-			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));
-			arranger.setArrangement(arrangement);
-			if (soundManager != null ) arranger.setSoundManager(soundManager);
-			else (Toast.makeText(this, "Something is wrong, there is no sound manager", Toast.LENGTH_LONG)).show();
-			break;
-		case ARRANGING:
-			break;
-		}
+		Message toSend = new Message();
+		toSend.obj = s;
+		activityChooser.sendMessage(toSend);
 	}
 	
     /** Called when the activity is first created. */
@@ -95,6 +122,7 @@ public class ScanVox extends Activity {
     public void onCreate(Bundle savedInstanceState) {
     	
         super.onCreate(savedInstanceState);
+        activityChooser = new ActivityChooser();
     	try {
 
     		File dataDir = new File(ScService.dataDirStr);
@@ -118,11 +146,9 @@ public class ScanVox extends Activity {
 			e.printStackTrace();
 		}
 
+		(new LaunchSCWhenFilesAreReady()).start();
         // /test data
         //superCollider.openUDP(57110);
-        superCollider.start();
-        soundManager = new SoundManager(superCollider);
-        setUserActivity(UserActivity.RECORDING);
     }
     
     @Override
@@ -150,7 +176,11 @@ public class ScanVox extends Activity {
      */
 	protected void pipeFile(String assetName, String targetDir) throws IOException {
 		InputStream is;
-		is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _
+		AssetManager am = getAssets();
+		if (am.list(assetName).length == 0)
+			is = getAssets().open("m"+assetName); // Android assets don't get copied out if they begin with _ so they get prefixed with m
+		else
+			is = getAssets().open(assetName);
 		File target = new File(targetDir,assetName);
 		OutputStream os = new FileOutputStream(target);
 		byte[] buf = new byte[1024];
@@ -160,5 +190,47 @@ public class ScanVox extends Activity {
 		}
 		is.close();
 		os.close();
+	}
+	
+	private class LaunchSCWhenFilesAreReady extends Thread {
+		public static final int MAX_TRIES = 500;
+		public static final long TIME_TWIXT_TRIES = 10;
+		public void run () {
+			boolean hasAllSynths = false, hasAllTrees = false;
+			int remainingTries = MAX_TRIES;
+    		File sndDir = new File("/sdcard/",scanvoxTreeDirectory);
+    		File dataDir = new File(ScService.dataDirStr);
+
+			while ((!hasAllTrees || !hasAllSynths) && remainingTries-- > 0) {
+				hasAllSynths = true;
+				for (String synth : mySynthDefs) {
+					if (!(new File(dataDir,synth).exists())) {
+						hasAllSynths = false;
+						break;
+					}
+				}
+				hasAllTrees = true;
+				for (String tree : myTreeFiles) {
+					if (!(new File(sndDir,tree).exists())) {
+						hasAllTrees = false;
+						break;
+					}
+				}
+				if (!hasAllTrees || !hasAllSynths) {
+					try {
+						sleep(TIME_TWIXT_TRIES);
+					} catch (InterruptedException e) { }
+				}
+			}
+			if (!hasAllTrees || !hasAllSynths) {
+				errorMessage = "ScanVox could not copy all of its data to this device's storage.  If you have removed your SD card, please re-insert it and try again.";
+				setUserActivity(UserActivity.FATAL_ERROR);
+			} else {
+				superCollider.start();
+				soundManager = new SoundManager(superCollider);
+				
+		        setUserActivity(UserActivity.RECORDING);
+			}
+		}
 	}
 }
