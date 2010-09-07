@@ -149,18 +149,8 @@ public class SoundManager {
 		if (!recording) return;
 		try {
 			String playController;
-			switch(synthType.getNumControls()) {
-			case 7:
-				playController = "_scanvox_playcontrols7";
-				break;
-			case 9:
-				playController = "_scanvox_playcontrols9";
-				break;
-			default:
-				Log.e(TAG,String.format("UNIMPLEMENTED BUS WIDTH FOR '%s'",synthType.getLabel()));
-				recording = false;
-				return;
-			}
+			playController = "_scanvox_playcontrols" + synthType.getNumControls();
+			Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", synthType.getLabel(), playController));
 			OscMessage playMsg = new OscMessage( new Object[] {
 	    	    "s_new",playController,playNodeForId(lastBufferId), addToHead, playersGroupNode,
 	    	    "timbrebuf"    ,lastBufferId,
