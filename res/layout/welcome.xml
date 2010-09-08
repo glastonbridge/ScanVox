@@ -26,9 +26,37 @@
 Scanvox will translate it into a synth sound and put it on the looping display.\n\n
   
 You can record and arrange multiple sounds." />
-  <ImageView android:src="@drawable/robot_icon" 
+  <LinearLayout
+  android:id="@+id/boxypics"
   android:layout_width="fill_parent"
-  android:layout_height="wrap_content" 
+  android:layout_height="wrap_content"
+  android:layout_centerInParent="true"
+  android:layout_centerHorizontal="true"
+  android:orientation="horizontal"
+  android:layout_below="@+id/content">
+  <ImageView android:src="@drawable/qm_blue_logo" 
+  android:layout_width="136px"
+  android:layout_height="110px"
+  android:maxWidth="100px"
+  android:maxHeight="100px"
+  android:padding="10px"
+  android:layout_centerInParent="true"
+  android:layout_centerHorizontal="true"
+   />
+  <ImageView android:src="@drawable/sc_cube_bw" 
+  android:layout_width="128px"
+  android:layout_height="128px"
+  android:maxWidth="100px"
+  android:maxHeight="100px"
+  android:padding="10px"
+  android:layout_centerInParent="true"
+  android:layout_centerHorizontal="true"
+  />
+  </LinearLayout>
+  <ImageView android:src="@drawable/penlogo" 
+  android:maxHeight="40px"
+  android:layout_width="wrap_content"
+  android:layout_height="40px" 
   android:layout_below="@+id/content" />
   </LinearLayout>
   <ImageButton android:id="@+id/Record" android:text="REC"
