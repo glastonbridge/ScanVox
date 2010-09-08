@@ -2,7 +2,7 @@
 .settings/**/*
 ScanVoxSuperCollider
 # ignore paths to be generated during build
-assets/m_*.scsyndef
+assets/m*.scsyndef
 bin/**/*
 gen/**/*
 # ignore mac cruft
