@@ -1,4 +1,4 @@
-package org.isophonics.scanvox;
+package org.isophonics.scanvox.allocators;
 
 public interface Allocator {
 	/*

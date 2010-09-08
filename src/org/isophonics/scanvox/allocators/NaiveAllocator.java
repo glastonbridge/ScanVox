@@ -1,4 +1,5 @@
-package org.isophonics.scanvox;
+package org.isophonics.scanvox.allocators;
+
 
 /*
  * Simple allocator for busses/nodes
