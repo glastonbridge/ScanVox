@@ -18,6 +18,7 @@ class PlayingSound {
     private int ampMatchNode=-1;
     private int recordBuffer=-1;
     private Allocator nodeAllocator, bufferAllocator;
+    protected int length; //ms
     protected MappedSynth synth;
     protected boolean isValid = false; // SoundManager will set this true on completion
     protected float[] dbamps; // amplitudes in decibels reported by the server, expected to be -60 to 0

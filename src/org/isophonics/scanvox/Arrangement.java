@@ -19,6 +19,7 @@ public class Arrangement {
 	public static final String TAG = "Arrangement";
 	
 	protected int length = 16; /** The length of the loop, in ticks */
+	protected int ticksPerBeat = 4;
 	
 	public Arrangement(int numRows) {
 		for (int i=0;i<numRows; ++i) rows.add(new Row());
@@ -43,6 +44,8 @@ public class Arrangement {
 		public int getLength()  { return length; }
 	}
 	public Vector<Row> rows=new Vector<Row>();
+
+	public int bpm;
 	
 	/**
 	 * Represents a row of arranged sounds.  The choice of row for a
