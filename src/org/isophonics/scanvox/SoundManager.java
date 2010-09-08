@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import org.isophonics.scanvox.allocators.Allocator;
+import org.isophonics.scanvox.allocators.NaiveAllocator;
+
 //import android.os.Environment;
 import android.util.Log;
 

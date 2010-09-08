@@ -1,5 +1,7 @@
 package org.isophonics.scanvox;
 
+import org.isophonics.scanvox.allocators.Allocator;
+
 /**
  * Contains runtime-created data about a synthesizer, and
  * provides basic accessors to control it through supercollider
