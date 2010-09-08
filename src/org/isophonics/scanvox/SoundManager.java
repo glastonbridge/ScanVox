@@ -59,6 +59,8 @@ public class SoundManager {
     	beatBus = krBusAllocator.nextID();
     	
     	superCollider.sendMessage(new OscMessage( new Object[] {
+    			"notify", 1}));
+    	superCollider.sendMessage(new OscMessage( new Object[] {
     			"s_new","clockodile", clockNode, addToHead, 1, "out", beatBus}));
     	superCollider.sendMessage(new OscMessage( new Object[] {
     			"g_new", playersGroupNode, addToTail, 1}));
@@ -133,9 +135,33 @@ public class SoundManager {
     		final int bufferChannels,
     		final PlayingSound newSound) {
 		recordWait = new Thread(new Runnable(){
+			private static final long timestep = 200L;
+			private long mSleepTime = sleepTime;
+			private boolean stillWaiting = true;
 			public void run() {
 				try {
-					Thread.sleep(sleepTime);
+					while(stillWaiting){// && (mSleepTime > 0)){
+						Thread.sleep(timestep);
+						mSleepTime -= timestep;
+						// Having woken up, check the postbox for messages.
+						while(stillWaiting && SCAudio.hasMessages()){
+							OscMessage msgFromServer = SCAudio.getMessage();
+							if (msgFromServer != null){
+								//Log.d(TAG, "addWhenReady found message: " + msgFromServer.toString());
+								String firstToken = msgFromServer.get(0).toString();
+								if(firstToken.equals("/tr")
+									&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
+									// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
+									float dbamp = ((Float)msgFromServer.get(3)).floatValue();
+									Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
+								}else if(firstToken.equals("/n_end") 
+										&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
+									Log.d(TAG, "addWhenReady discovered our own record synth has freed: " + newSound.getRecordNode());
+									stillWaiting = false;
+								}
+							}
+						}
+					}
 				} catch (InterruptedException e) {} 
 				loopNew(sac,bufferChannels,newSound);
 			}

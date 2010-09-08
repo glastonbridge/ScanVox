@@ -4,7 +4,7 @@
 
 // "recording" synthdef - takes input from mic and writes data to multichannel buffer
 SynthDef(\_scanvox_rec, {  |timbrebuf=0|
-	var tplsound, chain, chaintrig, ana;
+	var tplsound, chain, chaintrig, ana, db, logtrig;
 	
 	tplsound = SoundIn.ar();
 	
@@ -12,8 +12,16 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 	chain = FFT(LocalBuf(1024), tplsound, wintype: 1);
 	chaintrig = chain > -0.5;
 	ana = FeatureSet1.scanvox1.graph.value(chain, tplsound);
-	Logger.kr(ana, chaintrig, timbrebuf);
-	Line.kr(1,1,10, doneAction: 2) // bleh
+	
+	// this bit sends decibel amplitude values back to clients for monitoring:
+	db = ana[1].max(0.00001).ampdb;
+	SendTrig.kr(PulseDivider.kr(chaintrig, 4), 7, db); // 7 is arbitrary ID for this trig
+	//db.poll(chaintrig, label: "db");
+	//db.poll(PulseDivider.kr(chaintrig, 4), label: "db pulsediv");
+	// trigger pulse-divided by 4 makes about 21 Hz of sending triggers, at 44kHz that is
+	
+	logtrig = Logger.kr(ana, chaintrig, timbrebuf);
+	FreeSelf.kr(logtrig < 0.5); // Logger output goes from 1 to 0 when it's full
 }).writeDefFile;
 
 
