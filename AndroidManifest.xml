@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <application android:icon="@drawable/robot_icon" android:label="@string/app_name" android:theme="@android:style/Theme.Light" android:debuggable="true">
         <activity android:name=".ScanVox"
-                  android:label="@string/app_name">
+                  android:label="@string/app_name"
+                  android:configChanges="keyboard|keyboardHidden|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
