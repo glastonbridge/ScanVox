@@ -31,7 +31,6 @@ public class SoundManager {
 	private static final int addToTail = 1;
 	@SuppressWarnings("unused")
 	private static final int addBefore = 2;
-	@SuppressWarnings("unused")
 	private static final int addAfter  = 3;
 	@SuppressWarnings("unused")
 	private static final int addReplace= 4;
