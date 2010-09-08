@@ -152,7 +152,7 @@ public class ScanVox extends Activity {
     @Override
     public void onPause() {
     	super.onPause();
-		superCollider.sendMessage (OscMessage.quitMessage());
+		superCollider.sendQuit();
 
 		while (!superCollider.isEnded()) {
 			try {
@@ -163,6 +163,7 @@ public class ScanVox extends Activity {
 				break;
 			}
 		}
+		this.finish();
     }
     
     /**

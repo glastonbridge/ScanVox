@@ -207,16 +207,7 @@ public class SoundManager {
 			recording = false;
 		}
 	}
-	
-	/**
-	 * There's a standard layout for synthdef node numbers based on their
-	 * id.  They are recorded in the following functions:
-	 * @return
-	 */
-	private int recordNodeForId(int id) {return OscMessage.defaultNodeId   + 4*id  ;}
-	private int synthNodeForId(int id) {return OscMessage.defaultNodeId    + 4*id+2;}
-	private int ampMatchNodeForId(int id) {return OscMessage.defaultNodeId + 4*id+3;}
-	
+		
 	/**
 	 * Lightweight interface to asynchronously let the caller know that
 	 * their sound was added successfully and gives them the ID of the 
