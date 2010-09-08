@@ -147,8 +147,6 @@ public class ScanVox extends Activity {
 		}
 
 		(new LaunchSCWhenFilesAreReady()).start();
-        // /test data
-        //superCollider.openUDP(57110);
     }
     
     @Override
@@ -226,6 +224,7 @@ public class ScanVox extends Activity {
 				errorMessage = "ScanVox could not copy all of its data to this device's storage.  If you have removed your SD card, please re-insert it and try again.";
 				setUserActivity(UserActivity.FATAL_ERROR);
 			} else {
+				superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
 				superCollider.start();
 				soundManager = new SoundManager(superCollider);
 				
