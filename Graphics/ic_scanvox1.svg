@@ -14,10 +14,10 @@
    sodipodi:version="0.32"
    inkscape:version="0.45.1"
    version="1.0"
-   sodipodi:docbase="/Users/dan/dev/ScanVox/assets"
-   sodipodi:docname="scanvoxicon1.svg"
+   sodipodi:docbase="/Users/dan/dev/ScanVox/Graphics"
+   sodipodi:docname="ic_scanvox1.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   inkscape:export-filename="/Users/dan/dev/ScanVox/assets/ic_scanvox1.png"
+   inkscape:export-filename="/Users/dan/dev/ScanVox/res/drawable/ic_scanvox1.png"
    inkscape:export-xdpi="86.400002"
    inkscape:export-ydpi="86.400002">
   <defs
@@ -54,7 +54,7 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="4.2921382"
+     inkscape:zoom="6.07"
      inkscape:cx="25"
      inkscape:cy="25"
      inkscape:document-units="px"
@@ -92,7 +92,7 @@
        sodipodi:nodetypes="cccc"
        id="path5304"
        d="M 358.4374,238.86949 C 355.4374,233.86949 352.94148,233 346.65802,233 L 329.34198,233 C 323.05852,233 321.4374,234.86949 318.4374,238.86949"
-       style="color:#000000;fill:none;fill-opacity:0.1375;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.15000001;visibility:visible;display:inline;overflow:visible;filter:url(#filter5300);enable-background:accumulate"
+       style="color:#000000;fill:none;fill-opacity:0.1375;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.30000001;visibility:visible;display:inline;overflow:visible;filter:url(#filter5300);enable-background:accumulate"
        transform="matrix(1,0,0,-1,0,505.4774)" />
     <rect
        ry="11.341984"
@@ -101,7 +101,7 @@
        height="46.027313"
        width="45.872185"
        id="rect6109"
-       style="opacity:1;color:#000000;fill:#000000;fill-opacity:0.1375;fill-rule:evenodd;stroke:#000000;stroke-width:0.69338697;stroke-linecap:butt;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       style="opacity:1;color:#000000;fill:#000000;fill-opacity:0.34375;fill-rule:evenodd;stroke:#000000;stroke-width:0.69338697;stroke-linecap:butt;stroke-linejoin:round;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        transform="scale(-1,1)" />
     <path
        id="path6111"
