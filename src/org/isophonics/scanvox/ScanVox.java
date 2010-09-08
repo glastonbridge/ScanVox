@@ -25,6 +25,7 @@ import net.sf.supercollider.android.ScService;
 
 public class ScanVox extends Activity {
 	public static final String dllDirStr = "/data/data/org.isophonics.scanvox/lib"; // TODO: not very extensible, hard coded, generally sucks
+	private static final int DEFAULT_BPM = 120;
 	public static enum UserActivity {
 		WELCOME, RECORDING, ARRANGING, FATAL_ERROR
 	}
@@ -65,7 +66,11 @@ public class ScanVox extends Activity {
 	private class ActivityChooser extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            switch((UserActivity)msg.obj) {
+        	setUserActivity((UserActivity)msg.obj);
+        }
+        private void setUserActivity(UserActivity s) {
+        	Arranger arranger;
+            switch(s) {
     		case WELCOME:
     	        setContentView(R.layout.welcome);
     	        ImageButton rec = (ImageButton) findViewById(R.id.Record);
@@ -76,16 +81,19 @@ public class ScanVox extends Activity {
     	        });
     			break;
     		case RECORDING:
+    			setUserActivity(UserActivity.ARRANGING);
+    			arranger = (Arranger) findViewById(R.id.arranger);
+    			arranger.startRecording();
+    			break;
+    		case ARRANGING:
     			setContentView(R.layout.arranger);
-    			Arranger arranger = (Arranger) findViewById(R.id.arranger);
+    			arranger = (Arranger) findViewById(R.id.arranger);
     			arranger.backgroundPaint.setColor(getResources().getColor(android.R.color.background_light));
     			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
     			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));
     			arranger.setArrangement(arrangement);
     			if (soundManager != null ) arranger.setSoundManager(soundManager);
     			else (Toast.makeText(ScanVox.this, "Something is wrong, there is no sound manager", Toast.LENGTH_LONG)).show();
-    			break;
-    		case ARRANGING:
     			break;
     		case FATAL_ERROR:
 				setContentView(R.layout.fatal);
@@ -228,8 +236,8 @@ public class ScanVox extends Activity {
 				superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
 				superCollider.start();
 				soundManager = new SoundManager(superCollider);
-				
-		        setUserActivity(UserActivity.RECORDING);
+				soundManager.setBPM(DEFAULT_BPM);
+		        setUserActivity(UserActivity.WELCOME);
 			}
 		}
 	}

@@ -169,10 +169,11 @@ public class SoundManager {
 	    	    "controlsbus", mappedControlsBus,
 	    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
 	    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
-	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName())
+	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
+	    	    "myphase", 0
 	    	});
 			OscMessage beatMap = new OscMessage( new Object[] {
-				"n_map",newSound.getPlayNode(),"clockbus",beatBus
+				"n_set",newSound.getPlayNode(),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
 				"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
@@ -207,7 +208,7 @@ public class SoundManager {
 			recording = false;
 		}
 	}
-		
+	
 	/**
 	 * Lightweight interface to asynchronously let the caller know that
 	 * their sound was added successfully and gives them the ID of the 
@@ -237,7 +238,7 @@ public class SoundManager {
 	 */
 	public void setSoundStart(PlayingSound sound, int f) {
 		OscMessage startMessage = new OscMessage(new Object[] {
-				"n_set",sound.getPlayNode(),"myPhase",f
+				"n_set",sound.getPlayNode(),"myphase",f
 		});
 		Log.d(TAG,startMessage.toString());
 		superCollider.sendMessage(startMessage);
@@ -287,5 +288,19 @@ public class SoundManager {
 
 		return true;
 		
+	}
+	
+	/**
+	 * Set the BPM of the supercollider clock
+	 * 
+	 * @param bpm
+	 */
+	public void setBPM(int bpm) {
+		float beatInHz = bpm/60f;
+		OscMessage rateMessage = new OscMessage(new Object[] {
+			"n_set",clockNode,"rate",beatInHz
+		});
+		Log.d(TAG,"RATE:"+rateMessage.toString());
+		superCollider.sendMessage(rateMessage);
 	}
 }

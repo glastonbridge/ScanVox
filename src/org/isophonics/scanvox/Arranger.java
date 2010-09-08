@@ -237,11 +237,13 @@ public class Arranger extends View {
 			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
 			if (buttonId != -1) {
 				if (buttonId == Dashboard.recordId) {
-					if (soundManager.recording) {
-						soundManager.stopRecording();
-						dashboard.stopRecording();
-					} if(soundManager!=null && soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1()) !=-1) {
-						dashboard.startRecording(bufferDuration,mRedrawHandler);
+					if(soundManager!=null) {
+						if (soundManager.recording) {
+							soundManager.stopRecording();
+							dashboard.stopRecording();
+						} else {
+							startRecording();
+						}
 					}
 				} else if (buttonId == Dashboard.trashId) {
 					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT).show();
@@ -271,6 +273,14 @@ public class Arranger extends View {
 		return false;
 	}
 	
+	/**
+	 * Notifies all relevant objects to start their sound recording activity
+	 */
+	public void startRecording() {
+		soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1());
+		dashboard.startRecording(bufferDuration,mRedrawHandler);
+	}
+
 	private class UpdateArrangerCallback implements SoundManager.SoundAddedCallback {
 		private Arranger parent;
 		public UpdateArrangerCallback(Arranger parent) {this.parent = parent;}
