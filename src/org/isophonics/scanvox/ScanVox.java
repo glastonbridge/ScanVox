@@ -161,6 +161,7 @@ public class ScanVox extends Activity {
     @Override
     public void onPause() {
     	super.onPause();
+    	superCollider.closeUDP();
 		superCollider.sendQuit();
 
 		while (!superCollider.isEnded()) {
