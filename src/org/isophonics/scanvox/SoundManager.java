@@ -169,7 +169,8 @@ public class SoundManager {
 	    	    "controlsbus", mappedControlsBus,
 	    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
 	    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
-	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName())
+	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
+	    	    "myphase", 0
 	    	});
 			OscMessage beatMap = new OscMessage( new Object[] {
 				"n_set",newSound.getPlayNode(),"clockbus",beatBus
@@ -237,7 +238,7 @@ public class SoundManager {
 	 */
 	public void setSoundStart(PlayingSound sound, int f) {
 		OscMessage startMessage = new OscMessage(new Object[] {
-				"n_set",sound.getPlayNode(),"myPhase",f
+				"n_set",sound.getPlayNode(),"myphase",f
 		});
 		Log.d(TAG,startMessage.toString());
 		superCollider.sendMessage(startMessage);
