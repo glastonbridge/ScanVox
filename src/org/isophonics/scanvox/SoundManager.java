@@ -28,7 +28,6 @@ public class SoundManager {
 	private static final int addToTail = 1;
 	@SuppressWarnings("unused")
 	private static final int addBefore = 2;
-	@SuppressWarnings("unused")
 	private static final int addAfter  = 3;
 	@SuppressWarnings("unused")
 	private static final int addReplace= 4;
@@ -170,7 +169,7 @@ public class SoundManager {
 	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName())
 	    	});
 			OscMessage beatMap = new OscMessage( new Object[] {
-				"n_map",newSound.getPlayNode(),"clockbus",beatBus
+				"n_set",newSound.getPlayNode(),"clockbus",beatBus
 			});
 			OscMessage synthMessage = new OscMessage( new Object[] {
 				"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
@@ -205,15 +204,6 @@ public class SoundManager {
 			recording = false;
 		}
 	}
-	
-	/**
-	 * There's a standard layout for synthdef node numbers based on their
-	 * id.  They are recorded in the following functions:
-	 * @return
-	 */
-	private int recordNodeForId(int id) {return OscMessage.defaultNodeId   + 4*id  ;}
-	private int synthNodeForId(int id) {return OscMessage.defaultNodeId    + 4*id+2;}
-	private int ampMatchNodeForId(int id) {return OscMessage.defaultNodeId + 4*id+3;}
 	
 	/**
 	 * Lightweight interface to asynchronously let the caller know that
@@ -294,5 +284,19 @@ public class SoundManager {
 
 		return true;
 		
+	}
+	
+	/**
+	 * Set the BPM of the supercollider clock
+	 * 
+	 * @param bpm
+	 */
+	public void setBPM(int bpm) {
+		float beatInHz = bpm/60f;
+		OscMessage rateMessage = new OscMessage(new Object[] {
+			"n_set",clockNode,"rate",beatInHz
+		});
+		Log.d(TAG,"RATE:"+rateMessage.toString());
+		superCollider.sendMessage(rateMessage);
 	}
 }
