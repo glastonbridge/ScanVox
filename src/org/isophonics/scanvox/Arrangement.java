@@ -32,8 +32,8 @@ public class Arrangement {
 	public static class Sound {
 		private int startTime = 0;
 		private int length = 0;
-		protected int id;
-		public Sound(int id,int s, int l) {
+		protected PlayingSound id;
+		public Sound(PlayingSound id,int s, int l) {
 			this.id = id;
 			if (s>0) startTime = s; // quietly force into the +ve domain 
 			length = l;
@@ -126,6 +126,10 @@ public class Arrangement {
 		 * Exposes an iterator to the underlying linkedlist.
 		 */
 		public Iterator<Sound> iterator() { return contents.iterator(); }
+		
+		public boolean isEmpty() {
+			return contents.isEmpty();
+		}
 		
 		
 	}

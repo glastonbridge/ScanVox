@@ -54,7 +54,7 @@ public class Dashboard extends Drawable {
 			Paint recordPaint = new Paint();
 			recordPaint.setColor(0xFF440000);
 			canvas.drawRect(0,(float) (height-2.5*buttonHeight),canvas.getWidth()*amountRecorded/recordTime, height - 2* buttonHeight, recordPaint);
-			refreshHandler.sleep(50);
+			refreshHandler.sleep(ScanVox.GRAPHIC_REFRESH_PERIOD);
 		}
 		for (int i=0; i<buttonImages.length; ++i)
 			canvas.drawBitmap(buttonImages[i],null, locateButton(i),buttonPaint);
@@ -71,7 +71,7 @@ public class Dashboard extends Drawable {
 		isRecording = true;
 		buttonImages[recordId] = stopButton;
 		this.refreshHandler = refreshHandler;
-		refreshHandler.sleep(50);
+		refreshHandler.sleep(ScanVox.GRAPHIC_REFRESH_PERIOD);
 	}
 
 	/**
