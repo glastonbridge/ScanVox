@@ -96,13 +96,14 @@ public class SoundManager {
      * @param synthType 
      * @return the id of the requested buffer.
      */
-    public int recordNew(long size, SoundAddedCallback sac, MappedSynth synthType) {
+    public int recordNew(int size, SoundAddedCallback sac, MappedSynth synthType) {
     	if (recording) return -1;  // @TODO: There's better ways to do mutexes
     	recording = true;
     	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator,synthType);
+    	newSound.length = size;
     	int bufferChannels  = bufferChannelsDefault;  //
     	OscMessage bufferAllocMsg = new OscMessage( new Object[] {
-    		"b_alloc",newSound.getRecordBuffer(),(int) ((size*SCAudio.sampleRateInHz/1000)/512),bufferChannels
+    		"b_alloc",newSound.getRecordBuffer(),(int) ((newSound.length*SCAudio.sampleRateInHz/1000)/512),bufferChannels
     	});
     	Log.d(TAG,bufferAllocMsg.toString());
     	

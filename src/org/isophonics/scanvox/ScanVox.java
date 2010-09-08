@@ -19,7 +19,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import net.sf.supercollider.android.OscMessage;
 import net.sf.supercollider.android.SCAudio;
 import net.sf.supercollider.android.ScService;
 
@@ -61,6 +60,7 @@ public class ScanVox extends Activity {
 	public static final long GRAPHIC_REFRESH_PERIOD = 150;
 	
 	protected Arrangement arrangement = new Arrangement(numberOfRows);
+
 	protected SoundManager soundManager = null; 
 	
 	private class ActivityChooser extends Handler {
@@ -130,6 +130,7 @@ public class ScanVox extends Activity {
     public void onCreate(Bundle savedInstanceState) {
     	
         super.onCreate(savedInstanceState);
+        arrangement.bpm = DEFAULT_BPM;
         activityChooser = new ActivityChooser();
     	try {
 
