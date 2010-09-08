@@ -2,6 +2,7 @@ package org.isophonics.scanvox;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -101,7 +102,8 @@ public class SoundManager {
     public int recordNew(long size, SoundAddedCallback sac, MappedSynth synthType) {
     	if (recording) return -1;  // @TODO: There's better ways to do mutexes
     	recording = true;
-    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator,synthType);
+    	long ampArrayLen = ((SCAudio.sampleRateInHz * size) / 512) /4000; // 512 is hop size of features, 4 is decimation of db-samplerate in recsynth, 1000 is millisecs to secs 
+    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator,synthType, (int)ampArrayLen);
     	int bufferChannels  = bufferChannelsDefault;  //
     	OscMessage bufferAllocMsg = new OscMessage( new Object[] {
     		"b_alloc",newSound.getRecordBuffer(),(int) ((size*SCAudio.sampleRateInHz/1000)/512),bufferChannels
@@ -136,13 +138,13 @@ public class SoundManager {
     		final PlayingSound newSound) {
 		recordWait = new Thread(new Runnable(){
 			private static final long timestep = 200L;
-			private long mSleepTime = sleepTime;
+			//private long mSleepTime = sleepTime;
 			private boolean stillWaiting = true;
 			public void run() {
 				try {
 					while(stillWaiting){// && (mSleepTime > 0)){
 						Thread.sleep(timestep);
-						mSleepTime -= timestep;
+						//mSleepTime -= timestep;
 						// Having woken up, check the postbox for messages.
 						while(stillWaiting && SCAudio.hasMessages()){
 							OscMessage msgFromServer = SCAudio.getMessage();
@@ -153,11 +155,13 @@ public class SoundManager {
 									&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
 									// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
 									float dbamp = ((Float)msgFromServer.get(3)).floatValue();
-									Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
+									//Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
+									newSound.pushDbampValue(dbamp);
 								}else if(firstToken.equals("/n_end") 
 										&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
 									Log.d(TAG, "addWhenReady discovered our own record synth has freed: " + newSound.getRecordNode());
 									stillWaiting = false;
+									Log.d(TAG, "collected intamps: " + Arrays.toString(newSound.intamps));
 								}
 							}
 						}

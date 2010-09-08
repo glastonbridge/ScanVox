@@ -1,6 +1,9 @@
 package org.isophonics.scanvox;
 
+import java.util.Arrays;
+
 import org.isophonics.scanvox.allocators.Allocator;
+import org.isophonics.scanvox.allocators.NaiveAllocator;
 
 /**
  * Contains runtime-created data about a synthesizer, and
@@ -17,13 +20,25 @@ class PlayingSound {
     private Allocator nodeAllocator, bufferAllocator;
     protected MappedSynth synth;
     protected boolean isValid = false; // SoundManager will set this true on completion
+    protected float[] dbamps; // amplitudes in decibels reported by the server, expected to be -60 to 0
+    protected int[] intamps;  // amplitudes converted to integer useful for visualising
+    public static final int   maxIntAmp = 100;
+    public static final float floatToIntRescaler = ((float)maxIntAmp) / 60.f;
+    private NaiveAllocator dbampAllocator;
     public PlayingSound(
     		Allocator nodeAllocator, 
     		Allocator bufferAllocator, 
-    		MappedSynth synthType) {
+    		MappedSynth synthType, 
+    		int ampArrayLen) {
     	this.nodeAllocator = nodeAllocator;
     	this.bufferAllocator = bufferAllocator;
     	this.synth = synthType;
+    	
+    	this.dbampAllocator = new NaiveAllocator(0);
+    	this.dbamps = new float[ampArrayLen];
+    	Arrays.fill(this.dbamps, -60.f); // TODO - maybe we don't need to store the dbamps long-term?
+    	this.intamps = new int[ampArrayLen];
+    	Arrays.fill(this.intamps, 0);
     }
 	public int getRecordNode() {
 		if (recordNode == -1) recordNode = nodeAllocator.nextID();
@@ -44,5 +59,12 @@ class PlayingSound {
 	public int getAmpMatchNode() {
 		if (ampMatchNode == -1) ampMatchNode = nodeAllocator.nextID();
 		return ampMatchNode;
+	}
+	public void pushDbampValue(float val){
+		int index = dbampAllocator.nextID();
+		if (index<dbamps.length){ // NB silent fail if too many values...
+			dbamps[index] = val;
+			intamps[index] = Math.max(0, Math.min(maxIntAmp, (int)((val + 60.f) * floatToIntRescaler)));
+		}
 	}
 }

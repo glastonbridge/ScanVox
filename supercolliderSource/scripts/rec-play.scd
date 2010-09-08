@@ -14,7 +14,7 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 	ana = FeatureSet1.scanvox1.graph.value(chain, tplsound);
 	
 	// this bit sends decibel amplitude values back to clients for monitoring:
-	db = ana[1].max(0.00001).ampdb;
+	db = ana[1].max(0.001).ampdb; // NB 0.001 limits to -60db floor
 	SendTrig.kr(PulseDivider.kr(chaintrig, 4), 7, db); // 7 is arbitrary ID for this trig
 	//db.poll(chaintrig, label: "db");
 	//db.poll(PulseDivider.kr(chaintrig, 4), label: "db pulsediv");
