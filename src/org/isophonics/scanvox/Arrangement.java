@@ -19,7 +19,7 @@ public class Arrangement {
 	public static final String TAG = "Arrangement";
 	
 	protected int length = 16; /** The length of the loop, in ticks */
-	protected int ticksPerBeat = 4;
+	protected int ticksPerBeat = 1;
 	
 	public Arrangement(int numRows) {
 		for (int i=0;i<numRows; ++i) rows.add(new Row());
