@@ -80,4 +80,8 @@ s.waitForBoot{MappedSynth1Gendy1.new.wander}
 	}
 }
 
+*guiColour{
+	^0xff6699ff
+}
+
 }

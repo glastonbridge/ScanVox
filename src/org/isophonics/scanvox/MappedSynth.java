@@ -22,13 +22,17 @@ public abstract class MappedSynth {
 	 */
 	public abstract String getLabel();
 	/**
-	 * In reality this is the 'old' class name, used in the AIFF data file paths to distinguish the maps for the different synth sounds
-	 */
-	public abstract String getBufFileNameRoot();
-	/**
 	 * Name for the synthdef which makes the "synth synth" (i.e. the actual sounding one)
 	 */
 	public abstract String getSynthDefName();
+	/**
+	 * Each MappedSynth should have its own representative colour - used e.g. for the 'amber' blocks
+	 */
+	public abstract int getGuiColour();
+	/**
+	 * In reality this is the 'old' class name, used in the AIFF data file paths to distinguish the maps for the different synth sounds
+	 */
+	public abstract String getBufFileNameRoot();
 	/**
 	 * the filename for the "tree" data to be used by PlaneTree
 	 */

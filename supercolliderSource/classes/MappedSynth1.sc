@@ -23,6 +23,10 @@ var server;
 ////////////////////////////////////////////////////////////////////////////////////
 // Overridable stuff:
 
+*guiColour{
+	^this.subclassResponsibility; // pls return an integer in android Color format
+}
+
 *synthDefName{
 	// override this in subclass and return a symbol for the synthdef name
 	^this.subclassResponsibility;
@@ -284,13 +288,15 @@ MappedSynth1.genJava("/Users/danstowell/dev/ScanVox/gen/")
 			public String getLabel()              { return %; }
 			public String getBufFileNameRoot()    { return %; }
 			public String getSynthDefName()       { return %; }
+			public int    getGuiColour()          { return %; }
 		}
 	".format(this.name, 
 		this.synthDefParams.size, 
 		this.paramShouldBePitch ? -1,
 		this.name.asString[12..].replace("1", "").quote,
 		this.name.asString.replace("MappedSynth1", "MappedSynth").quote,
-		this.synthDefName.asString.quote
+		this.synthDefName.asString.quote,
+		this.guiColour
 		)
 }
 

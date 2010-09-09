@@ -75,4 +75,8 @@ extraArgs {
 	}
 }
 
+*guiColour{
+	^0xff9966ff
+}
+
 }
