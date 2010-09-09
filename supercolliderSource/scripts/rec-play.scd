@@ -3,7 +3,7 @@
 // synthdefs for recording and playing back audio go here
 
 // "recording" synthdef - takes input from mic and writes data to multichannel buffer
-SynthDef(\_scanvox_rec, {  |timbrebuf=0|
+SynthDef(\_scanvox_rec, {  |timbrebuf=0, clockbus=0|
 	var tplsound, chain, chaintrig, ana, db, logtrig;
 	
 	tplsound = SoundIn.ar();
@@ -15,10 +15,13 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 	
 	// this bit sends decibel amplitude values back to clients for monitoring:
 	db = ana[1].max(0.001).ampdb; // NB 0.001 limits to -60db floor
-	SendTrig.kr(PulseDivider.kr(chaintrig, 4), 7, db); // 7 is arbitrary ID for this trig
+	SendTrig.kr(PulseDivider.kr(chaintrig, 4), 7, db); // 7 is arbitrary ID for these db trigs
 	//db.poll(chaintrig, label: "db");
 	//db.poll(PulseDivider.kr(chaintrig, 4), label: "db pulsediv");
 	// trigger pulse-divided by 4 makes about 21 Hz of sending triggers, at 44kHz that is
+	
+	// We also grab the clock position at the moment we very start, and send that home so we can be positioned on the grid
+	SendTrig.kr(Impulse.kr(0), 5, In.kr(clockbus)); // 5 is arbitrary ID for these clock trigs
 	
 	logtrig = Logger.kr(ana, chaintrig, timbrebuf);
 	FreeSelf.kr(logtrig < 0.5); // Logger output goes from 1 to 0 when it's full

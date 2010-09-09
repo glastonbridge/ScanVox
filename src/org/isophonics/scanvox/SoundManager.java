@@ -200,11 +200,23 @@ public class SoundManager {
     	SCMessageManager.OscListener trListener = new OscListener() {
     		public void receive(OscMessage msgFromServer) {
 				if(((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
-					// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
-					float dbamp = ((Float)msgFromServer.get(3)).floatValue();
-					//Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
-					newSound.pushDbampValue(dbamp);
-					recordListener.recordUpdate();
+					// messagetype and node ID matches. 
+					// to distinguish phase trigs and amp trigs, we also check that msg.get(2) matches the trigger ID
+					switch(((Integer)msgFromServer.get(2)).intValue()){
+					case 7:
+						// It's a decibel amplitude message
+						float dbamp = ((Float)msgFromServer.get(3)).floatValue();
+						//Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
+						newSound.pushDbampValue(dbamp);
+						recordListener.recordUpdate();
+						break;
+					case 5:
+						// It's a startingphase message
+						
+						// TODO - we can't make use of this information until the clock is a pure phasor
+						
+						break;
+					}
 				}
     		}
     	};
@@ -224,7 +236,9 @@ public class SoundManager {
     	messageManager.register(trListener, "/tr");
     	messageManager.register(endListener, "/n_end");
     	OscMessage recordMsg = new OscMessage( new Object[] {
-        	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,recordersGroupNode,"timbrebuf",newSound.getRecordBuffer()
+        	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,recordersGroupNode,
+        	    	"timbrebuf", newSound.getRecordBuffer(),
+        	    	"clockbus", beatBus
         	});
     	Log.d(TAG,recordMsg.toString());
     	recordListener.recordStart(newSound);
