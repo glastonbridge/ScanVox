@@ -54,7 +54,7 @@ s.waitForBoot{MappedSynth1Moogy1.new.wander}
 }
 
 *guiColour{
-	^0xff66ff99
+	^"0xff66ff99"
 }
 
 }

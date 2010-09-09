@@ -76,7 +76,7 @@ extraArgs {
 }
 
 *guiColour{
-	^0xff9966ff
+	^"0xff9966ff"
 }
 
 }
