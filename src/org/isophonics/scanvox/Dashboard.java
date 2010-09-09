@@ -22,7 +22,7 @@ import android.graphics.drawable.Drawable;
  */
 public class Dashboard extends Drawable {
 
-	private int buttonHeight = 50, buttonWidth = 50;
+	private int buttonHeight = 50;
 	public static final int trashId = 0, recordId = 1;
 	protected int height; // Needed for locating buttons that have been drawn
 	private Arranger.RefreshHandler refreshHandler;
@@ -30,7 +30,7 @@ public class Dashboard extends Drawable {
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
 	public Bitmap[] buttonImages = new Bitmap[2]; // The currently-visible buttons
-	private Bitmap stopButton, recButton; // buttonImages 
+	private Bitmap waitButton, recButton; // buttonImages 
 	
 	public Dashboard(Context c, RefreshHandler refreshHandler) {	
 
@@ -38,12 +38,11 @@ public class Dashboard extends Drawable {
 		buttonPaint.setAntiAlias(false);
 		
 		buttonImages[trashId]  = BitmapFactory.decodeResource(c.getResources(), R.drawable.bin);
-		buttonImages[recordId] = BitmapFactory.decodeResource(c.getResources(), R.drawable.rec_sq);
+		buttonImages[recordId] = BitmapFactory.decodeResource(c.getResources(), R.drawable.rec);
 		recButton = buttonImages[recordId];
-		stopButton = BitmapFactory.decodeResource(c.getResources(), R.drawable.stop);
+		waitButton = BitmapFactory.decodeResource(c.getResources(), R.drawable.wait);
 
 		buttonHeight     = buttonImages[0].getHeight();
-		buttonWidth      = buttonImages[0].getWidth();
 		this.refreshHandler = refreshHandler;
 		
 	}
@@ -64,7 +63,7 @@ public class Dashboard extends Drawable {
 		@Override
 		public void recordStart(PlayingSound sound) {
 			isRecording = true;
-			buttonImages[recordId] = stopButton;
+			buttonImages[recordId] = waitButton;
 			levels = sound.intamps;
 			refreshHandler.trigger();
 		}
@@ -89,14 +88,19 @@ public class Dashboard extends Drawable {
 	}
 		
 	/**
-	 * Locate a button on the button bar at the bottom of the screen
+	 * Locate a button on the button bar at the bottom of the screen.
+	 * 
+	 * Note that we assume all buttons are the same height.
 	 */
 	private Rect locateButton(int id) {
 		Rect result = new Rect();
+		int buttonLeft = 0;
+		for (int i = 0; i<id; ++i) buttonLeft += buttonImages[i].getWidth();
+		int buttonRight = buttonLeft + buttonImages[id].getWidth();
 		result.bottom = height-buttonHeight;
 		result.top = height - 2*buttonHeight;
-		result.left = id * buttonWidth;
-		result.right = (id + 1) * buttonWidth;
+		result.left = buttonLeft;
+		result.right = buttonRight;
 		return result;
 	}
 	/**
@@ -107,8 +111,16 @@ public class Dashboard extends Drawable {
 	 */
 	public int identifyButton(int x, int y) {
 		if (y<height-buttonHeight && y > height - 2*buttonHeight) {
-			int possibleId = x / buttonWidth; 
-			if (possibleId < buttonImages.length) return possibleId; // match found
+			int left = 0;
+			int right = 0;
+			int id = 0;
+			for (Bitmap button : buttonImages) {
+				if (x<left) return -1;
+				right += button.getWidth();
+				if (x<right) return id;
+				++id;
+				left = right;
+			}
 		}
 		return -1;
 	}
