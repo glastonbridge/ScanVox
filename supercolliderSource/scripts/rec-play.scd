@@ -43,6 +43,7 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 		bufferIsDone = Done.kr(ana);
 		
 		amp = ana[1];
+		amp = amp * SetResetFF.kr(resettrig); // silence amplitude until first trigger caught
 		amp = amp * (bufferIsDone < 0.1); // silence amplitude when done
 		Out.kr(ampbus, amp);
 		
