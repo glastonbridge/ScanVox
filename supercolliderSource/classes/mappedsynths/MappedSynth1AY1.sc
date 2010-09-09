@@ -56,4 +56,8 @@ s.waitForBoot{MappedSynth1AY1.new.wander}
 	}
 }
 
+*guiColour{
+	^"0xffff99ff"
+}
+
 }

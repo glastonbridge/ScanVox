@@ -43,4 +43,8 @@ s.waitForBoot{MappedSynth1SuperSimple.new.wander}
 	}
 }
 
+*guiColour{
+	^"0xffff9966"
+}
+
 }
