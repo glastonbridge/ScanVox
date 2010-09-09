@@ -26,6 +26,10 @@ public abstract class MappedSynth {
 	 */
 	public abstract String getBufFileNameRoot();
 	/**
+	 * Name for the synthdef which makes the "synth synth" (i.e. the actual sounding one)
+	 */
+	public abstract String getSynthDefName();
+	/**
 	 * the filename for the "tree" data to be used by PlaneTree
 	 */
 	public String getTreeFileName(){

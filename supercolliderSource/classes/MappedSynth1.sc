@@ -279,14 +279,19 @@ MappedSynth1.genJava("/Users/danstowell/dev/ScanVox/gen/")
 		package org.isophonics.scanvox;
 		
 		public class % extends MappedSynth {
-			public int getNumControls(){ return %; }
-			public int getParamShouldBePitch(){ return %; }
-			public String getLabel(){ return %; }
-			public String getBufFileNameRoot(){ return %; }
+			public int    getNumControls()        { return %; }
+			public int    getParamShouldBePitch() { return %; }
+			public String getLabel()              { return %; }
+			public String getBufFileNameRoot()    { return %; }
+			public String getSynthDefName()       { return %; }
 		}
-	".format(this.name, this.synthDefParams.size, this.paramShouldBePitch ? -1,
+	".format(this.name, 
+		this.synthDefParams.size, 
+		this.paramShouldBePitch ? -1,
 		this.name.asString[12..].replace("1", "").quote,
-		this.name.asString.replace("MappedSynth1", "MappedSynth").quote)
+		this.name.asString.replace("MappedSynth1", "MappedSynth").quote,
+		this.synthDefName.asString.quote
+		)
 }
 
 }// end class
