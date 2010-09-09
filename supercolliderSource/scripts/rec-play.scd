@@ -31,7 +31,7 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 	// Assumes that it resets itself to zero whenever the clockbus contains a value matching myphase.
 	SynthDef(("_scanvox_playcontrols"++numparams).asSymbol, { |timbrebuf=0, treebuf=0, trevbuf=0, 
 				controlsbus=0, ampbus=0, clockbus=0, myphase=1, paramShouldBePitch= -1|
-		var clock, ana, amp, traj, index, controls, resettrig;
+		var clock, ana, amp, traj, index, controls, resettrig, bufferIsDone;
 		
 		clock = In.kr(clockbus);
 		clock.poll(clock, label: "clock (recv in playcontrols)");
@@ -40,8 +40,10 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0|
 		clock.poll(resettrig, label: "clock MATCH (recv in playcontrols)");
 		
 		ana = PlayBuf.kr(FeatureSet1.scanvox1.list.size, timbrebuf, (SampleRate.ir / ControlRate.ir) / 512, resettrig);
+		bufferIsDone = Done.kr(ana);
 		
 		amp = ana[1];
+		amp = amp * (bufferIsDone < 0.1); // silence amplitude when done
 		Out.kr(ampbus, amp);
 		
 		traj = ana[2..];
