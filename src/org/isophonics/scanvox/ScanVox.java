@@ -133,6 +133,7 @@ public class ScanVox extends Activity {
         super.onCreate(savedInstanceState);
         arrangement.bpm = DEFAULT_BPM;
         activityChooser = new ActivityChooser();
+        SoundView.initDataStore(getResources());
     	try {
 
     		File dataDir = new File(ScService.dataDirStr);

@@ -26,17 +26,11 @@ public class Dashboard extends Drawable {
 	public static final int trashId = 0, recordId = 1;
 	protected int height; // Needed for locating buttons that have been drawn
 	private Arranger.RefreshHandler refreshHandler;
-	private static final int LEVEL_QUIET = 30;
-	private static final int LEVEL_MID   = 70;
 	
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
 	public Bitmap[] buttonImages = new Bitmap[2]; // The currently-visible buttons
 	private Bitmap stopButton, recButton; // buttonImages 
-
-	Paint quietPaint = new Paint();
-	Paint midPaint = new Paint();
-	Paint loudPaint = new Paint();
 	
 	public Dashboard(Context c, RefreshHandler refreshHandler) {	
 
@@ -52,9 +46,6 @@ public class Dashboard extends Drawable {
 		buttonWidth      = buttonImages[0].getWidth();
 		this.refreshHandler = refreshHandler;
 		
-		quietPaint.setColor(0xFF008800);
-		midPaint.setColor(0xFF888800);
-		loudPaint.setColor(0xFF880000);
 	}
 
 	/**
@@ -90,43 +81,12 @@ public class Dashboard extends Drawable {
 		height = canvas.getHeight();
 		if (isRecording) {
 			int progressMiddle = 2* height / 5;
-			drawWave(canvas, recordMonitor.levels, progressMiddle, 100);
+			SoundView.drawWave(canvas, recordMonitor.levels, progressMiddle, 100);
 		}
 		for (int i=0; i<buttonImages.length; ++i)
 			canvas.drawBitmap(buttonImages[i],null, locateButton(i),buttonPaint);
 	}
-	
-	/**
-	 * Draws a sound's "waveform" onto a canvas, around a given axis
-	 * @param c
-	 * @param axis
-	 */
-	private void drawWave(
-			Canvas canvas, 
-			int[] levels, 
-			int axis ,
-			int height) {
 		
-		int height2 = height/2;
-		int barWidth = canvas.getWidth() / levels.length;
-		int progressLeft = 0;
-		int progressRight =barWidth;
-		Paint recordPaint;
-		for (int level : recordMonitor.levels) {
-			if      (level < LEVEL_QUIET ) recordPaint = quietPaint;
-			else if (level < LEVEL_MID   ) recordPaint = midPaint;
-			else                           recordPaint = loudPaint;
-			canvas.drawRect(
-					progressLeft,
-					axis- height2*level/100, 
-					progressRight, 
-					axis+ height2*level/100, 
-					recordPaint);
-			progressLeft += barWidth;
-			progressRight+= barWidth;
-		}		
-	}
-	
 	/**
 	 * Locate a button on the button bar at the bottom of the screen
 	 */

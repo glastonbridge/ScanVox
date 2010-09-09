@@ -4,6 +4,7 @@ import org.isophonics.scanvox.Arrangement.Sound;
 import org.isophonics.scanvox.Arranger.GridDimensions;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -24,6 +25,9 @@ public class SoundView extends View {
 	protected Bitmap internalRepresentation;
 	private GridDimensions gridDimensions;
 	private Paint backgroundPaint;
+
+	private static final int LEVEL_QUIET = 30;
+	private static final int LEVEL_MID   = 70;
 	
 	public SoundView(Context context, Sound s,GridDimensions gd) {
 		super(context);
@@ -35,26 +39,70 @@ public class SoundView extends View {
 		backgroundPaint.setColor(0xFFAAAA44); // Yellowy
 		render();
 	}
-	private static class BitmapStore {
+	private static class StaticDataStore {
 		public Bitmap soundFrontLeft;
 		public Bitmap soundFrontMiddle;
 		public Bitmap soundFrontRight;
 		public int bevelWidth=0;
 		public Paint soundPaint = new Paint();
+		Paint quietPaint = new Paint();
+		Paint midPaint = new Paint();
+		Paint loudPaint = new Paint();
+
+		public StaticDataStore(Resources res) {
+			soundFrontLeft   = BitmapFactory.decodeResource(res, R.drawable.chunk_front_left);
+			soundFrontMiddle = BitmapFactory.decodeResource(res, R.drawable.chunk_front_mid);
+			soundFrontRight  = BitmapFactory.decodeResource(res, R.drawable.chunk_front_right);
+			bevelWidth       = soundFrontLeft.getWidth();
+			quietPaint.setColor(0xFF008800);
+			midPaint.setColor(0xFF888800);
+			loudPaint.setColor(0xFF880000);			
+		}
 	}
-	private BitmapStore bitmaps = null;
+	private static StaticDataStore graphics = null;
 	
 	/**
 	 * Do this once per scanvox process, provides standard images for drawing sounds
 	 */
-	private void initBitmapTable() {
-		bitmaps = new BitmapStore();
-		bitmaps.soundFrontLeft   = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_left);
-		bitmaps.soundFrontMiddle = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_mid);
-		bitmaps.soundFrontRight  = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_right);
-		bitmaps.bevelWidth       = bitmaps.soundFrontLeft.getWidth();
+	public static void initDataStore(Resources res) {
+		if (graphics == null) graphics = new StaticDataStore(res);
 	}
-	
+
+	/**
+	 * Draws a sound's "waveform" onto a canvas, around a given axis
+	 * 
+	 * @param c
+	 * @param levels the levels recorded for each sample
+	 * @param axis the position of the y axis
+	 * @param the maximum size of the waveform 
+	 */
+	public static void drawWave(
+			Canvas canvas, 
+			int[] levels, 
+			int axis ,
+			int height) {
+		
+		// NB. will fail if initDataStore has not been called
+		int height2 = height/2;
+		int barWidth = canvas.getWidth() / levels.length;
+		int progressLeft = 0;
+		int progressRight =barWidth;
+		Paint recordPaint;
+		for (int level : levels) {
+			if      (level < LEVEL_QUIET ) recordPaint = graphics.quietPaint;
+			else if (level < LEVEL_MID   ) recordPaint = graphics.midPaint;
+			else                           recordPaint = graphics.loudPaint;
+			canvas.drawRect(
+					progressLeft,
+					axis- height2*level/100, 
+					progressRight, 
+					axis+ height2*level/100, 
+					recordPaint);
+			progressLeft += barWidth;
+			progressRight+= barWidth;
+		}		
+	}
+
 	/**
 	 * This should usually be fancier (see docs), but as we're only called from Arranger it's all that's required
 	 */
@@ -68,7 +116,7 @@ public class SoundView extends View {
 	 * performance hit
 	 */
 	private void render() {
-		if (bitmaps == null) initBitmapTable();
+		if (graphics == null) initDataStore(getResources());
 		int height = gridDimensions.y;
 		int width  = sound.getLength()*gridDimensions.x;
 		internalRepresentation = Bitmap.createBitmap(
@@ -85,19 +133,20 @@ public class SoundView extends View {
 		Rect inner = new Rect();
 		inner.top = 0;
 		inner.bottom = height;
-		inner.left = bitmaps.bevelWidth;
-		inner.right = width - bitmaps.bevelWidth;
+		inner.left = graphics.bevelWidth;
+		inner.right = width - graphics.bevelWidth;
 
-		float roundness = bitmaps.bevelWidth;
+		float roundness = graphics.bevelWidth;
 		c.drawRoundRect(outer, roundness, roundness, backgroundPaint);
-		c.drawBitmap(bitmaps.soundFrontLeft  , 0         , 0   , bitmaps.soundPaint);
-		c.drawBitmap(bitmaps.soundFrontMiddle, null      , inner, bitmaps.soundPaint);
-		c.drawBitmap(bitmaps.soundFrontRight , inner.right, 0   , bitmaps.soundPaint);		
+		drawWave(c, sound.id.intamps, height/2, height);
+		c.drawBitmap(graphics.soundFrontLeft  , 0         , 0   , graphics.soundPaint);
+		c.drawBitmap(graphics.soundFrontMiddle, null      , inner, graphics.soundPaint);
+		c.drawBitmap(graphics.soundFrontRight , inner.right, 0   , graphics.soundPaint);		
 	}
 	
 	public int getButtonHeight() {
-		if (bitmaps == null) initBitmapTable();
-		return bitmaps.soundFrontLeft.getHeight();
+		if (graphics == null) initDataStore(getResources());
+		return graphics.soundFrontLeft.getHeight();
 	}
 	
 	/**
@@ -105,6 +154,6 @@ public class SoundView extends View {
 	 */
 	@Override
 	public void onDraw(Canvas c) {
-		c.drawBitmap(internalRepresentation,getLeft(),getTop(),bitmaps.soundPaint);
+		c.drawBitmap(internalRepresentation,getLeft(),getTop(),graphics.soundPaint);
 	}
 }
