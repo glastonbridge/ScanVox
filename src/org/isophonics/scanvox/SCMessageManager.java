@@ -90,8 +90,6 @@ public class SCMessageManager {
 		String messageType = om.get(0).toString();
 		if (listeners.containsKey(messageType)) {
 			LinkedList<OscListener> handlerQueue = listeners.get(messageType);
-			Log.d(TAG,String.format("There are %d handlers of type %s",
-					handlerQueue.size(),om.get(0).toString()));
 			for (OscListener ol : handlerQueue) 
 				try {
 					ol.receive(om);
@@ -114,7 +112,6 @@ public class SCMessageManager {
 			while (listening) {
 				while (SCAudio.hasMessages()) {
 					OscMessage receivedMessage = SCAudio.getMessage();
-					Log.d(TAG,"Received:"+receivedMessage.toString());
 					notifyListeners (receivedMessage);
 				}
 				try {
