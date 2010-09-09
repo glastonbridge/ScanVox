@@ -232,8 +232,19 @@ public class SoundManager {
 				}
     		}
     	};
+    	// /tr for start (@TODO: use startingphase above, when ready to do so)
+		SCMessageManager.OscListener startListener = new SCMessageManager.OscListener() {
+			@Override
+			public void receive(OscMessage msgFromServer) {
+				if(((Integer)msgFromServer.get(2)).intValue()==SoundManager.CLOCK_TRIGGER_UID) {
+					newSound.phase = (Float)msgFromServer.get(3);
+					messageManager.unregister(this, "/tr");
+				}
+			}
+		};
 
     	messageManager.register(trListener, "/tr");
+    	messageManager.register(startListener, "/tr");
     	messageManager.register(endListener, "/n_end");
     	OscMessage recordMsg = new OscMessage( new Object[] {
         	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,recordersGroupNode,
@@ -277,8 +288,8 @@ public class SoundManager {
     	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
     	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
     	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
-    	    "myphase", 0,
-    	    "clockbus",beatBus
+    	    "myphase", 	   newSound.phase,
+    	    "clockbus",    beatBus
     	});
 		OscMessage synthMessage = new OscMessage( new Object[] {
 			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
@@ -304,7 +315,7 @@ public class SoundManager {
     	superCollider.sendMessage( controlMap );
     	superCollider.sendMessage( ampMatchMsg );
     	//TODO - DEBUG, remove:
-    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
+    	//superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
 	}
 	
 	/**
@@ -334,7 +345,7 @@ public class SoundManager {
 	 * @param id the sound to modify
 	 * @param f the tick to use
 	 */
-	public void setSoundStart(PlayingSound sound, int f) {
+	public void setSoundStart(PlayingSound sound, float f) {
 		OscMessage startMessage = new OscMessage(new Object[] {
 				"n_set",sound.getPlayNode(),"myphase",f
 		});

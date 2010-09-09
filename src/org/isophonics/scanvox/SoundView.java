@@ -108,7 +108,7 @@ public class SoundView extends View {
 	 */
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		setMeasuredDimension((int)gridDimensions.x*sound.getLength(),(int)gridDimensions.y);
+		setMeasuredDimension((int)(gridDimensions.x*sound.getLength()),(int)gridDimensions.y);
 	}
 		
 	/**
@@ -118,7 +118,7 @@ public class SoundView extends View {
 	private void render() {
 		if (graphics == null) initDataStore(getResources());
 		int height = gridDimensions.y;
-		int width  = sound.getLength()*gridDimensions.x;
+		int width  = (int)(sound.getLength()*gridDimensions.x);
 		internalRepresentation = Bitmap.createBitmap(
 				width, 
 				height, 

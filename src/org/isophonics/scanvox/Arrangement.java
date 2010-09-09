@@ -31,17 +31,17 @@ public class Arrangement {
 	 *
 	 */
 	public static class Sound {
-		private int startTime = 0;
-		private int length = 0;
+		private float startTime = 0;
+		private float length = 0;
 		protected PlayingSound id;
-		public Sound(PlayingSound id,int s, int l) {
+		public Sound(PlayingSound id,float s, float l) {
 			this.id = id;
 			if (s>0) startTime = s; // quietly force into the +ve domain 
 			length = l;
 			}
-		public int getStartTime() {	return startTime; }
-		public int getEndTime()   { return startTime+length; }
-		public int getLength()  { return length; }
+		public float getStartTime() {	return startTime; }
+		public float getEndTime()   { return startTime+length; }
+		public float getLength()  { return length; }
 	}
 	public Vector<Row> rows=new Vector<Row>();
 
@@ -64,7 +64,7 @@ public class Arrangement {
 		 * @param needle
 		 * @return sound being played, null if no sound is being played
 		 */
-		public Sound grabSoundAt(int needle) {
+		public Sound grabSoundAt(float needle) {
 			int item = 0;
 			Sound result = null;
 			for (Sound s : contents) {
@@ -91,14 +91,14 @@ public class Arrangement {
 			// Hello new sound, do you fit into this arrangement?
 			Log.d(TAG,"Trying to add sound ("+newSound.startTime+","+newSound.length+")");
 			if (newSound.getEndTime()>Arrangement.this.length) return false;
-			int newSoundStartTime = newSound.getStartTime();
+			float newSoundStartTime = newSound.getStartTime();
 			int index = 0;
 			// Do you belong right at the beginning?
 			if (contents.size() == 0 ) {
 				contents.add(newSound);
 				return true;
 			} else {
-				int firstStartTime = contents.get(0).getStartTime();
+				float firstStartTime = contents.get(0).getStartTime();
 				if (firstStartTime <= newSoundStartTime) {
 					if (firstStartTime < newSound.getEndTime()) {
 						return false;
@@ -118,7 +118,7 @@ public class Arrangement {
 				++index;
 			}
 			// Do you fit in front of the thing you come before?
-			if ( contents.size()>=index
+			if ( contents.size()>index+1
 			  && newSound.getEndTime() > contents.get(index+1).getStartTime())
 				return false;
 			// Well done, you have defeated the guardians!

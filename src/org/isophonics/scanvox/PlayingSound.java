@@ -26,6 +26,7 @@ class PlayingSound {
     public static final int   maxIntAmp = 100;
     public static final float floatToIntRescaler = ((float)maxIntAmp) / 60.f;
     private NaiveAllocator dbampAllocator;
+	protected float phase = 0;
     public PlayingSound(
     		Allocator nodeAllocator, 
     		Allocator bufferAllocator, 

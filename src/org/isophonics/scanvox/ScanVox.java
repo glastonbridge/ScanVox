@@ -53,7 +53,7 @@ public class ScanVox extends Activity {
 		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.trevmap1.aiff"
 	};
 	
-	SCAudio superCollider = new SCAudio(dllDirStr);
+	SCAudio superCollider;
 	protected String errorMessage = null;  // to throw a fatal error, populate this and call setUserActivity(FATAL_ERROR)
 	public static final int numberOfRows = 10;
 	private static final String TAG = "ScanVox";
@@ -75,11 +75,14 @@ public class ScanVox extends Activity {
     		case WELCOME:
     	        setContentView(R.layout.welcome);
     	        ImageButton rec = (ImageButton) findViewById(R.id.Record);
-    	        rec.setOnClickListener(new OnClickListener() {
-    				public void onClick(View v) {
-    					setUserActivity(UserActivity.RECORDING);
-    				}
-    	        });
+    	        if (scanVoxIsInitialised) {
+	    	        rec.setOnClickListener(new OnClickListener() {
+	    				public void onClick(View v) {
+	    					setUserActivity(UserActivity.RECORDING);
+	    				}
+	    	        });
+	    	        rec.setImageResource(R.drawable.rec);
+    	        }
     			break;
     		case RECORDING:
     			setUserActivity(UserActivity.ARRANGING);
@@ -113,6 +116,7 @@ public class ScanVox extends Activity {
     };
 
     ActivityChooser activityChooser;
+	public boolean scanVoxIsInitialised = false;
     
 	/**
 	 * Change the application state to allow the user to do something
@@ -132,32 +136,12 @@ public class ScanVox extends Activity {
     public void onCreate(Bundle savedInstanceState) {
     	
         super.onCreate(savedInstanceState);
-        arrangement.bpm = DEFAULT_BPM;
+
+
         activityChooser = new ActivityChooser();
-        SoundView.initDataStore(getResources());
-    	try {
-
-    		File dataDir = new File(ScService.dataDirStr);
-    		dataDir.mkdirs(); 
-    		for (String synthdef : mySynthDefs )
-    			pipeFile(synthdef, ScService.dataDirStr);
-    		File sndDir = new File("/sdcard/",scanvoxTreeDirectory);
-//    		File sndDir = new File(Environment.getExternalStorageDirectory(),scanvoxTreeDirectory);
-    		sndDir.mkdirs();
-    		for (String tree : myTreeFiles)
-    			pipeFile(tree,sndDir.getAbsolutePath());
-		} catch (IOException e) {
-			Log.e(TAG,"Couldn't copy required files to the external storage device.");
-			e.printStackTrace();
-		}
-		
-		try {
-			for (String ass : getAssets().list("")) Log.d("TAG",String.format("Asset: '%s'",ass));
-		} catch (IOException e) {
-			Log.e(TAG,"Couldn't even LIST assets :(");
-			e.printStackTrace();
-		}
-
+        setUserActivity(UserActivity.WELCOME);
+        Thread.yield();
+        arrangement.bpm = DEFAULT_BPM;
 		(new LaunchSCWhenFilesAreReady()).start();
     }
     
@@ -208,6 +192,30 @@ public class ScanVox extends Activity {
 		public static final int MAX_TRIES = 500;
 		public static final long TIME_TWIXT_TRIES = 10;
 		public void run () {
+	        SoundView.initDataStore(getResources());
+	    	try {
+
+	    		File dataDir = new File(ScService.dataDirStr);
+	    		dataDir.mkdirs(); 
+	    		for (String synthdef : mySynthDefs )
+	    			pipeFile(synthdef, ScService.dataDirStr);
+	    		File sndDir = new File("/sdcard/",scanvoxTreeDirectory);
+//	    		File sndDir = new File(Environment.getExternalStorageDirectory(),scanvoxTreeDirectory);
+	    		sndDir.mkdirs();
+	    		for (String tree : myTreeFiles)
+	    			pipeFile(tree,sndDir.getAbsolutePath());
+			} catch (IOException e) {
+				Log.e(TAG,"Couldn't copy required files to the external storage device.");
+				e.printStackTrace();
+			}
+			
+			try {
+				for (String ass : getAssets().list("")) Log.d("TAG",String.format("Asset: '%s'",ass));
+			} catch (IOException e) {
+				Log.e(TAG,"Couldn't even LIST assets :(");
+				e.printStackTrace();
+			}
+
 			boolean hasAllSynths = false, hasAllTrees = false;
 			int remainingTries = MAX_TRIES;
     		File sndDir = new File("/sdcard/",scanvoxTreeDirectory);
@@ -238,12 +246,15 @@ public class ScanVox extends Activity {
 				errorMessage = "ScanVox could not copy all of its data to this device's storage.  If you have removed your SD card, please re-insert it and try again.";
 				setUserActivity(UserActivity.FATAL_ERROR);
 			} else {
+				superCollider = new SCAudio(dllDirStr);
 				superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
 				superCollider.start();
 			    messageManager = new SCMessageManager();
 			    messageManager.startListening(superCollider);
 				soundManager = new SoundManager(superCollider,messageManager);
 				soundManager.setBPM(DEFAULT_BPM);
+				scanVoxIsInitialised  = true;
+				// trigger redraw of the Record button
 		        setUserActivity(UserActivity.WELCOME);
 			}
 		}

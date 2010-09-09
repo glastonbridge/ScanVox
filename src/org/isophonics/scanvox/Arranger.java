@@ -125,7 +125,7 @@ public class Arranger extends View {
 				@Override
 				public void receive(OscMessage msgFromServer) {
 					if(((Integer)msgFromServer.get(2)).intValue()==SoundManager.CLOCK_TRIGGER_UID) {
-						cursorPos = ((Float)msgFromServer.get(3)).intValue();
+						cursorPos = (int)(((Float)msgFromServer.get(3))*16);
 						refreshHandler.trigger();
 					}
 				}
@@ -257,7 +257,7 @@ public class Arranger extends View {
 			if (arrangement.rows.size()>rowNum) {
 				Arrangement.Row row = arrangement.rows.get(rowNum);
 				Sound soundBeingMoved = row.grabSoundAt(
-						(int) (event.getX()/gridDimensions.x));
+						event.getX()/gridDimensions.x);
 				if (soundBeingMoved != null)
 					draggingSoundView = soundViews.get(soundBeingMoved);
 				if(draggingSoundView!=null) {
@@ -325,7 +325,7 @@ public class Arranger extends View {
 				Arrangement.Row row = arrangement.rows.get(rowNum);
 				if (row.isEmpty()) {
 					int arrangedSize = (thisSynth.length*arrangement.bpm*arrangement.ticksPerBeat)/(60*1000);
-					row.add (new Sound (thisSynth, 0, arrangedSize));
+					row.add (new Sound (thisSynth, (int)(16*thisSynth.phase), arrangedSize));
 					break;
 				}
 			}
@@ -347,10 +347,10 @@ public class Arranger extends View {
 		int rowNum = (int) (y / gridDimensions.y);
 		if (arrangement.rows.size() <= rowNum || rowNum <0) return false;
 		Arrangement.Row row = arrangement.rows.get(rowNum);
-		Sound updatedSound = new Sound (s.id,(int)(x/gridDimensions.x),s.getLength());
+		Sound updatedSound = new Sound (s.id,x/gridDimensions.x,s.getLength());
 		boolean couldAddSound = row.add (updatedSound);
 		if (couldAddSound) {
-			soundManager.setSoundStart(updatedSound.id,(int)(x/gridDimensions.x));
+			soundManager.setSoundStart(updatedSound.id,x/(gridDimensions.x*arrangement.length));
 		}
 		return couldAddSound;
 	}
