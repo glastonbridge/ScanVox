@@ -93,6 +93,7 @@ public class ScanVox extends Activity {
     			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
     			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));
     			arranger.setArrangement(arrangement);
+    			arranger.listenToMessages(messageManager);
     			if (soundManager != null ) arranger.setSoundManager(soundManager);
     			else (Toast.makeText(ScanVox.this, "Something is wrong, there is no sound manager", Toast.LENGTH_LONG)).show();
     			break;

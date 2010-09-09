@@ -28,6 +28,7 @@ import net.sf.supercollider.android.SCAudio;
  */
 public class SoundManager {
 	public long bufferSize = SCAudio.sampleRateInHz*2; // @TODO: magic number
+	public static final int CLOCK_TRIGGER_UID = 24;
 	private static final String TAG = "SoundManager";
 	private static final int addToHead = 0;
 	private static final int addToTail = 1;
@@ -65,7 +66,9 @@ public class SoundManager {
     	superCollider.sendMessage(new OscMessage( new Object[] {
     			"notify", 1}));
     	superCollider.sendMessage(new OscMessage( new Object[] {
-    			"s_new","clockodile", clockNode, addToHead, 1, "out", beatBus}));
+    			"s_new","clockodile", clockNode, addToHead, 1, 
+    			"out", beatBus, 
+    			"tr_uid", CLOCK_TRIGGER_UID}));
     	superCollider.sendMessage(new OscMessage( new Object[] {
     			"g_new", playersGroupNode, addToTail, 1}));
     }
@@ -191,7 +194,7 @@ public class SoundManager {
     		final PlayingSound newSound, 
     		final RecordListener recordListener) {
     	// tr
-    	final SCMessageManager.OscListener trListener = new OscListener() {
+    	SCMessageManager.OscListener trListener = new OscListener() {
     		public void receive(OscMessage msgFromServer) {
 				if(((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
 					// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
@@ -203,7 +206,7 @@ public class SoundManager {
     		}
     	};
     	// n_end
-    	final SCMessageManager.OscListener endListener = new OscListener() {
+    	SCMessageManager.OscListener endListener = new OscListener() {
     		public void receive(OscMessage msgFromServer) {
 				if (((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
 					Log.d(TAG, "addWhenReady discovered our own record synth has freed: " + newSound.getRecordNode());
@@ -257,11 +260,9 @@ public class SoundManager {
     	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
     	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
     	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
-    	    "myphase", 0
+    	    "myphase", 0,
+    	    "clockbus",beatBus
     	});
-		OscMessage beatMap = new OscMessage( new Object[] {
-			"n_set",newSound.getPlayNode(),"clockbus",beatBus
-		});
 		OscMessage synthMessage = new OscMessage( new Object[] {
 			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
     	    "out",         curAudioBus,
@@ -282,7 +283,6 @@ public class SoundManager {
 		//rm lastAudioBusId++;
 		Log.d(TAG,playMsg.toString());
     	superCollider.sendMessage( playMsg );
-    	superCollider.sendMessage( beatMap );
     	superCollider.sendMessage( synthMessage );
     	superCollider.sendMessage( controlMap );
     	superCollider.sendMessage( ampMatchMsg );

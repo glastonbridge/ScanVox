@@ -2,6 +2,8 @@ package org.isophonics.scanvox;
 
 import java.util.Hashtable;
 
+import net.sf.supercollider.android.OscMessage;
+
 import org.isophonics.scanvox.Arrangement.Sound;
 
 import android.content.Context;
@@ -35,12 +37,14 @@ public class Arranger extends View {
 	private static final String TAG = "Arranger";
 	
 	private static final int bufferDuration = 2000; // ms
+	private static final int CURSOR_COLOUR = 0x22444444;
 	
 	/** Paint objects for styling various parts of the Arranger */
 	public Paint 
 		backgroundPaint, 
 		rowDivisionPaint, 
 		timeDivisionPaint,
+		cursorPaint,
 		soundPaint;
 	
 	/** 
@@ -57,6 +61,8 @@ public class Arranger extends View {
 	private SoundManager soundManager;
 	
 	protected Arrangement arrangement=new Arrangement(0);
+
+	protected int cursorPos=0;
 	
 	public Arranger(Context c, AttributeSet s) {
 		super(c,s);
@@ -69,11 +75,13 @@ public class Arranger extends View {
 	}
 	
 	private void init() {
-		dashboard = new Dashboard(getContext(),mRedrawHandler);
+		dashboard = new Dashboard(getContext(),refreshHandler);
 		
 		backgroundPaint = new Paint();
 		timeDivisionPaint = new Paint();
 		rowDivisionPaint = new Paint();
+		cursorPaint = new Paint();
+		cursorPaint.setColor(CURSOR_COLOUR);
 		soundPaint = new Paint(); // used only on bitmaps, doesn't do very much
 		soundPaint.setAntiAlias(false);
 		
@@ -104,6 +112,31 @@ public class Arranger extends View {
 		soundManager = s;
 	}
 	
+	private boolean registeredListener = false;
+	/**
+	 * Listen out for updates to the cursor position
+	 * 
+	 * @param messageMan
+	 */
+	public synchronized void listenToMessages(SCMessageManager messageMan) {
+		if (!registeredListener) {
+			registeredListener = true;
+			messageMan.register(new SCMessageManager.OscListener() {
+				@Override
+				public void receive(OscMessage msgFromServer) {
+					if(((Integer)msgFromServer.get(2)).intValue()==SoundManager.CLOCK_TRIGGER_UID) {
+						cursorPos = ((Float)msgFromServer.get(3)).intValue();
+						refreshHandler.trigger();
+					}
+				}
+				@Override
+				public boolean equals(Object o) {
+					return false;
+				}
+			},"/tr");
+		}
+	}
+	
 	private SoundView draggingSoundView = null;
 	private float soundBeingMovedX, soundBeingMovedY;
 	/** The distance between the top left corner and where you're actually touching */
@@ -116,7 +149,7 @@ public class Arranger extends View {
 	 */
 	@Override
 	protected void onDraw(Canvas c) {
-
+		height = c.getHeight();
 		gridDimensions.x = c.getWidth()/arrangement.length;
 		c.drawRect(0,0,c.getWidth(),height,backgroundPaint);
 		drawGrid(c);
@@ -128,6 +161,15 @@ public class Arranger extends View {
 					(int)soundBeingMovedY,0,0);
 			draggingSoundView.draw(c);
 		}
+		// cursor
+		Log.d(TAG,String.format("drawRect(%d,%d,%d,%d)", 
+				cursorPos*gridDimensions.x,0,
+				(cursorPos+1)*gridDimensions.x,
+				height));
+		c.drawRect(
+				cursorPos*gridDimensions.x,0,
+				(cursorPos+1)*gridDimensions.x,
+				height, cursorPaint);
 		dashboard.draw(c);
 	}
 	
@@ -170,7 +212,7 @@ public class Arranger extends View {
 		}
 	}
 
-    private RefreshHandler mRedrawHandler = new RefreshHandler();
+    private RefreshHandler refreshHandler = new RefreshHandler();
 
     class RefreshHandler extends Handler {
 
@@ -179,9 +221,8 @@ public class Arranger extends View {
             Arranger.this.invalidate();
         }
 
-        public void sleep(long delayMillis) {
-                this.removeMessages(0);
-            sendMessageDelayed(obtainMessage(0), delayMillis);
+        public void trigger() {
+            sendEmptyMessage(0);
         }
     };
 
@@ -288,7 +329,7 @@ public class Arranger extends View {
 					break;
 				}
 			}
-			if (parent != null) parent.mRedrawHandler.sleep(1);
+			if (parent != null) parent.refreshHandler.trigger();
 		}
 
 	}

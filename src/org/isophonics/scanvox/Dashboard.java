@@ -58,7 +58,7 @@ public class Dashboard extends Drawable {
 		
 		@Override
 		public void recordUpdate() {
-			refreshHandler.sendEmptyMessage(0);
+			refreshHandler.trigger();
 		}
 		
 		@Override
@@ -66,13 +66,14 @@ public class Dashboard extends Drawable {
 			isRecording = true;
 			buttonImages[recordId] = stopButton;
 			levels = sound.intamps;
-			refreshHandler.sendEmptyMessage(0);
+			refreshHandler.trigger();
 		}
 		
 		@Override
 		public void recordEnd() {
 			isRecording = false;
-			refreshHandler.sendEmptyMessage(0);
+			buttonImages[recordId] = recButton;
+			refreshHandler.trigger();
 		}
 	};
 	
