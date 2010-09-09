@@ -40,6 +40,7 @@ public class SoundManager {
     protected SCAudio superCollider;
     protected Vector<Integer> bufferIDs = new Vector<Integer>();
     protected static final int clockNode = 1990;
+    protected static final int recordersGroupNode = 1992;
     protected static final int playersGroupNode = 1995;
     
     private Allocator krBusAllocator = new NaiveAllocator(0);
@@ -69,6 +70,8 @@ public class SoundManager {
     			"s_new","clockodile", clockNode, addToHead, 1, 
     			"out", beatBus, 
     			"tr_uid", CLOCK_TRIGGER_UID}));
+    	superCollider.sendMessage(new OscMessage( new Object[] {
+    			"g_new", recordersGroupNode, addToTail, 1}));
     	superCollider.sendMessage(new OscMessage( new Object[] {
     			"g_new", playersGroupNode, addToTail, 1}));
     }
@@ -221,7 +224,7 @@ public class SoundManager {
     	messageManager.register(trListener, "/tr");
     	messageManager.register(endListener, "/n_end");
     	OscMessage recordMsg = new OscMessage( new Object[] {
-        	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,1,"timbrebuf",newSound.getRecordBuffer()
+        	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,recordersGroupNode,"timbrebuf",newSound.getRecordBuffer()
         	});
     	Log.d(TAG,recordMsg.toString());
     	recordListener.recordStart(newSound);
