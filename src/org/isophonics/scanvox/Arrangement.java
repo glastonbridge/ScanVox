@@ -118,7 +118,8 @@ public class Arrangement {
 				++index;
 			}
 			// Do you fit in front of the thing you come before?
-			if (newSound.getEndTime() > contents.get(index+1).getStartTime())
+			if ( contents.size()>=index
+			  && newSound.getEndTime() > contents.get(index+1).getStartTime())
 				return false;
 			// Well done, you have defeated the guardians!
 			contents.add(index,newSound);

@@ -345,7 +345,7 @@ public class Arranger extends View {
 	private boolean addSoundAt (float x, float y, Sound s) {
 		Log.d(TAG,"Adding sound at "+x+","+y);
 		int rowNum = (int) (y / gridDimensions.y);
-		if (arrangement.rows.size() <= rowNum) return false;
+		if (arrangement.rows.size() <= rowNum || rowNum <0) return false;
 		Arrangement.Row row = arrangement.rows.get(rowNum);
 		Sound updatedSound = new Sound (s.id,(int)(x/gridDimensions.x),s.getLength());
 		boolean couldAddSound = row.add (updatedSound);
