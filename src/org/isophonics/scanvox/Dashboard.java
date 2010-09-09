@@ -1,5 +1,7 @@
 package org.isophonics.scanvox;
 
+import org.isophonics.scanvox.Arranger.RefreshHandler;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,17 +23,22 @@ import android.graphics.drawable.Drawable;
 public class Dashboard extends Drawable {
 
 	private int buttonHeight = 50, buttonWidth = 50;
-	public static final int trashId = 0, recordId = 1;;
-	protected int height,width;
-	public long recordTime = -1;
-	private long recordStarted = -1;
+	public static final int trashId = 0, recordId = 1;
+	protected int height; // Needed for locating buttons that have been drawn
 	private Arranger.RefreshHandler refreshHandler;
+	private static final int LEVEL_QUIET = 30;
+	private static final int LEVEL_MID   = 70;
+	
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
 	public Bitmap[] buttonImages = new Bitmap[2]; // The currently-visible buttons
 	private Bitmap stopButton, recButton; // buttonImages 
+
+	Paint quietPaint = new Paint();
+	Paint midPaint = new Paint();
+	Paint loudPaint = new Paint();
 	
-	public Dashboard(Context c) {	
+	public Dashboard(Context c, RefreshHandler refreshHandler) {	
 
 		buttonPaint = new Paint(); // used only on bitmaps, doesn't do very much
 		buttonPaint.setAntiAlias(false);
@@ -42,38 +49,84 @@ public class Dashboard extends Drawable {
 		stopButton = BitmapFactory.decodeResource(c.getResources(), R.drawable.stop);
 
 		buttonHeight     = buttonImages[0].getHeight();
-		buttonWidth      = buttonImages[0].getWidth();		
+		buttonWidth      = buttonImages[0].getWidth();
+		this.refreshHandler = refreshHandler;
+		
+		quietPaint.setColor(0xFF008800);
+		midPaint.setColor(0xFF888800);
+		loudPaint.setColor(0xFF880000);
 	}
 
+	/**
+	 * Update the graphics during a recording session
+	 */
+	protected RecordMonitor recordMonitor = new RecordMonitor();
+
+	private class RecordMonitor implements SoundManager.RecordListener {
+		int[] levels;
+		
+		@Override
+		public void recordUpdate() {
+			refreshHandler.sendEmptyMessage(0);
+		}
+		
+		@Override
+		public void recordStart(PlayingSound sound) {
+			isRecording = true;
+			buttonImages[recordId] = stopButton;
+			levels = sound.intamps;
+			refreshHandler.sendEmptyMessage(0);
+		}
+		
+		@Override
+		public void recordEnd() {
+			isRecording = false;
+			refreshHandler.sendEmptyMessage(0);
+		}
+	};
+	
 	@Override
 	public void draw(Canvas canvas) {
 		height = canvas.getHeight();
 		if (isRecording) {
-			long amountRecorded = System.currentTimeMillis()-recordStarted;
-			if (amountRecorded>recordTime) stopRecording();
-			Paint recordPaint = new Paint();
-			recordPaint.setColor(0xFF440000);
-			canvas.drawRect(0,(float) (height-2.5*buttonHeight),canvas.getWidth()*amountRecorded/recordTime, height - 2* buttonHeight, recordPaint);
-			refreshHandler.sleep(ScanVox.GRAPHIC_REFRESH_PERIOD);
+			int progressMiddle = 2* height / 5;
+			drawWave(canvas, recordMonitor.levels, progressMiddle, 100);
 		}
 		for (int i=0; i<buttonImages.length; ++i)
 			canvas.drawBitmap(buttonImages[i],null, locateButton(i),buttonPaint);
 	}
 	
 	/**
-	 * Trigger the "recording" progress bar
-	 * 
-	 * @param duration
+	 * Draws a sound's "waveform" onto a canvas, around a given axis
+	 * @param c
+	 * @param axis
 	 */
-	public void startRecording(long duration, Arranger.RefreshHandler refreshHandler) {
-		recordTime = duration;
-		recordStarted = System.currentTimeMillis();
-		isRecording = true;
-		buttonImages[recordId] = stopButton;
-		this.refreshHandler = refreshHandler;
-		refreshHandler.sleep(ScanVox.GRAPHIC_REFRESH_PERIOD);
+	private void drawWave(
+			Canvas canvas, 
+			int[] levels, 
+			int axis ,
+			int height) {
+		
+		int height2 = height/2;
+		int barWidth = canvas.getWidth() / levels.length;
+		int progressLeft = 0;
+		int progressRight =barWidth;
+		Paint recordPaint;
+		for (int level : recordMonitor.levels) {
+			if      (level < LEVEL_QUIET ) recordPaint = quietPaint;
+			else if (level < LEVEL_MID   ) recordPaint = midPaint;
+			else                           recordPaint = loudPaint;
+			canvas.drawRect(
+					progressLeft,
+					axis- height2*level/100, 
+					progressRight, 
+					axis+ height2*level/100, 
+					recordPaint);
+			progressLeft += barWidth;
+			progressRight+= barWidth;
+		}		
 	}
-
+	
 	/**
 	 * Locate a button on the button bar at the bottom of the screen
 	 */

@@ -70,7 +70,7 @@ public class SoundView extends View {
 	private void render() {
 		if (bitmaps == null) initBitmapTable();
 		int height = gridDimensions.y;
-		int width  = sound.getLength()*gridDimensions.x; 
+		int width  = sound.getLength()*gridDimensions.x;
 		internalRepresentation = Bitmap.createBitmap(
 				width, 
 				height, 

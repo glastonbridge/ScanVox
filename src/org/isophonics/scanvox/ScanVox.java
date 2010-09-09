@@ -25,6 +25,7 @@ import net.sf.supercollider.android.ScService;
 public class ScanVox extends Activity {
 	public static final String dllDirStr = "/data/data/org.isophonics.scanvox/lib"; // TODO: not very extensible, hard coded, generally sucks
 	private static final int DEFAULT_BPM = 120;
+	private SCMessageManager messageManager;
 	public static enum UserActivity {
 		WELCOME, RECORDING, ARRANGING, FATAL_ERROR
 	}
@@ -237,7 +238,9 @@ public class ScanVox extends Activity {
 			} else {
 				superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
 				superCollider.start();
-				soundManager = new SoundManager(superCollider);
+			    messageManager = new SCMessageManager();
+			    messageManager.startListening(superCollider);
+				soundManager = new SoundManager(superCollider,messageManager);
 				soundManager.setBPM(DEFAULT_BPM);
 		        setUserActivity(UserActivity.WELCOME);
 			}

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import org.isophonics.scanvox.SCMessageManager.OscListener;
 import org.isophonics.scanvox.allocators.Allocator;
 import org.isophonics.scanvox.allocators.NaiveAllocator;
 
@@ -46,12 +47,14 @@ public class SoundManager {
     private Allocator bufferAllocator= new NaiveAllocator(0);
     
     protected int beatBus;
+    private SCMessageManager messageManager;
     
     private static int bufferChannelsDefault = 7; 
     protected boolean recording = false;
     private static Hashtable<String,Integer> treeBufferIds = new Hashtable<String,Integer>();
     
-    public SoundManager(SCAudio s) {
+    public SoundManager(SCAudio s, SCMessageManager messageManager) {
+    	this.messageManager = messageManager;
     	superCollider = s;
     	initialise();
     }
@@ -91,16 +94,76 @@ public class SoundManager {
     }
     
     /**
+     * Call back to someone when the status of the recording changes.
+     * This allows a much more precise representation of the record
+     * state to be displayed to the user.
+     * 
+     * @author alex
+     *
+     */
+    public interface RecordListener {
+		public void recordStart(PlayingSound s);
+		public void recordUpdate();  // notify there's a new sample in the sound
+		public void recordEnd();
+	}
+
+    /**
+     * Any failure in the interaction between this class and SCAudio
+     * @author alex
+     *
+     */
+    public class SoundManagerException extends Exception {
+		public SoundManagerException(String what) {
+			super(what); // i say!
+		}
+		private static final long serialVersionUID = -2731210613186992589L;
+    }
+    
+    /**
      * Create a buffer of the requested size, and fill it with audio from the mic.
-     * Add it to the loop as soon as it's done.
+     * Add it to the loop as soon as it's done.  Does all this in a separate thread
+     * so as not to block GUI interaction.
      * 
      * @param size in ms
      * @param sac notify that the sound has been added
      * @param synthType 
-     * @return the id of the requested buffer.
      */
-    public int recordNew(int size, SoundAddedCallback sac, MappedSynth synthType) {
-    	if (recording) return -1;  // @TODO: There's better ways to do mutexes
+    public void recordNew (
+    		final int size, 
+    		final SoundAddedCallback sac, 
+    		final MappedSynth synthType, 
+    		final RecordListener recordListener) {
+    	if (recording) return;
+    	recording = true;
+    	new Thread(new Runnable() {
+    		public void run() {
+    			try {
+    				/**
+    				 * How to add a sound, in four simple steps:
+    				 */
+    				PlayingSound newSound = allocateBuffer(size, synthType);
+    				record(newSound, recordListener);
+    				setSynth(newSound);
+    		    	sac.whenSoundAdded ( newSound );
+    			} catch (Exception e) {
+    				e.printStackTrace();
+    			} finally {
+    				recording = false;
+    			}
+    		}
+    	}).start();
+    }
+    
+    /**
+     * Create a buffer, and associate it with a new PlayingSound
+     * 
+     * Stage 1 in the record process.
+     * 
+     * @param size
+     * @return
+     * @throws SoundManagerException 
+     */
+    public PlayingSound allocateBuffer(int size, MappedSynth synthType) throws SoundManagerException {
     	recording = true;
     	long ampArrayLen = ((SCAudio.sampleRateInHz * size) / 512) /4000; // 512 is hop size of features, 4 is decimation of db-samplerate in recsynth, 1000 is millisecs to secs 
     	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator,synthType, (int)ampArrayLen);
@@ -112,132 +175,119 @@ public class SoundManager {
     	Log.d(TAG,bufferAllocMsg.toString());
     	
     	if (!sendOscAndWaitForDone( bufferAllocMsg )) {
-    		recording = false;
-    		return -1;
+    		throw new SoundManagerException("Could not allocate a buffer!");
     	}
-    	OscMessage recordMsg = new OscMessage( new Object[] {
-    	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,1,"timbrebuf",newSound.getRecordBuffer()
-    	});
-    	Log.d(TAG,recordMsg.toString());
-    	superCollider.sendMessage( recordMsg );
-    	addWhenReady(size, sac, bufferChannels, newSound);
-    	return 0;
+    	return newSound;
     }
     
     /**
      * Tells the looper to start playing the requested buffer as soon as
      * it is ready (recording has finished).
-     * 
-     * @TODO: could this be added programmatically?
+     * @param recordListener 
      * 
      * @param bufferId
      */
-    private void addWhenReady(
-    		final long sleepTime, 
-    		final SoundAddedCallback sac,
-    		final int bufferChannels,
-    		final PlayingSound newSound) {
-		recordWait = new Thread(new Runnable(){
-			private static final long timestep = 200L;
-			//private long mSleepTime = sleepTime;
-			private boolean stillWaiting = true;
-			public void run() {
-				try {
-					while(stillWaiting){// && (mSleepTime > 0)){
-						Thread.sleep(timestep);
-						//mSleepTime -= timestep;
-						// Having woken up, check the postbox for messages.
-						while(stillWaiting && SCAudio.hasMessages()){
-							OscMessage msgFromServer = SCAudio.getMessage();
-							if (msgFromServer != null){
-								//Log.d(TAG, "addWhenReady found message: " + msgFromServer.toString());
-								String firstToken = msgFromServer.get(0).toString();
-								if(firstToken.equals("/tr")
-									&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
-									// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
-									float dbamp = ((Float)msgFromServer.get(3)).floatValue();
-									//Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
-									newSound.pushDbampValue(dbamp);
-								}else if(firstToken.equals("/n_end") 
-										&& ((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
-									Log.d(TAG, "addWhenReady discovered our own record synth has freed: " + newSound.getRecordNode());
-									stillWaiting = false;
-									Log.d(TAG, "collected intamps: " + Arrays.toString(newSound.intamps));
-								}
-							}
-						}
+    private void record(
+    		final PlayingSound newSound, 
+    		final RecordListener recordListener) {
+    	// tr
+    	final SCMessageManager.OscListener trListener = new OscListener() {
+    		public void receive(OscMessage msgFromServer) {
+				if(((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
+					// messagetype and node ID matches. to be picky we could also check that msg.get(2) matches the trigger ID
+					float dbamp = ((Float)msgFromServer.get(3)).floatValue();
+					//Log.d(TAG, "addWhenReady found dbamp value: " + dbamp);
+					newSound.pushDbampValue(dbamp);
+					recordListener.recordUpdate();
+				}
+    		}
+    	};
+    	// n_end
+    	final SCMessageManager.OscListener endListener = new OscListener() {
+    		public void receive(OscMessage msgFromServer) {
+				if (((Integer)msgFromServer.get(1)).intValue()==newSound.getRecordNode()){
+					Log.d(TAG, "addWhenReady discovered our own record synth has freed: " + newSound.getRecordNode());
+					Log.d(TAG, "collected intamps: " + Arrays.toString(newSound.intamps));
+					synchronized(SoundManager.this) {
+						SoundManager.this.notify();
 					}
-				} catch (InterruptedException e) {} 
-				loopNew(sac,bufferChannels,newSound);
-			}
-		});
-		recordWait.start();
-	}
+				}
+    		}
+    	};
 
-    private Thread recordWait = null;
+    	messageManager.register(trListener, "/tr");
+    	messageManager.register(endListener, "/n_end");
+    	OscMessage recordMsg = new OscMessage( new Object[] {
+        	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,1,"timbrebuf",newSound.getRecordBuffer()
+        	});
+    	Log.d(TAG,recordMsg.toString());
+    	recordListener.recordStart(newSound);
+    	superCollider.sendMessage( recordMsg );
+    	try {
+    		synchronized(this) {
+    			wait();
+    		}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} 
+    	recordListener.recordEnd();
+		messageManager.unregister(trListener, "/tr");
+		messageManager.unregister(endListener, "/n_end");
+	}
     
     /**
-     * add a buffer to the loop
+     * start doing audio playback using a new synthesizer
      * 
      * @param bufferId
+     * @throws IOException 
      */
-	private void loopNew(
-			SoundAddedCallback sac,
-			int bufferChannels,
-			PlayingSound newSound) {
-		if (!recording) return;
-		try {
-			String playController;
-			int curAmpBus         = krBusAllocator.nextID();
-			int mappedControlsBus = krBusAllocator.nextIDs(newSound.synth.getNumControls());
-			int curAudioBus       = arBusAllocator.nextID();
-			playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
-			Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
-			OscMessage playMsg = new OscMessage( new Object[] {
-	    	    "s_new",playController,newSound.getPlayNode(), addToHead, playersGroupNode,
-	    	    "timbrebuf",   newSound.getRecordBuffer(),
-	    	    "ampbus",      curAmpBus,
-	    	    "controlsbus", mappedControlsBus,
-	    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
-	    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
-	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
-	    	    "myphase", 0
+	private void setSynth(
+			PlayingSound newSound) throws IOException {
+		String playController;
+		int curAmpBus         = krBusAllocator.nextID();
+		int mappedControlsBus = krBusAllocator.nextIDs(newSound.synth.getNumControls());
+		int curAudioBus       = arBusAllocator.nextID();
+		playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
+		Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
+		OscMessage playMsg = new OscMessage( new Object[] {
+    	    "s_new",playController,newSound.getPlayNode(), addToHead, playersGroupNode,
+    	    "timbrebuf",   newSound.getRecordBuffer(),
+    	    "ampbus",      curAmpBus,
+    	    "controlsbus", mappedControlsBus,
+    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
+    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
+    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
+    	    "myphase", 0
+    	});
+		OscMessage beatMap = new OscMessage( new Object[] {
+			"n_set",newSound.getPlayNode(),"clockbus",beatBus
+		});
+		OscMessage synthMessage = new OscMessage( new Object[] {
+			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
+    	    "out",         curAudioBus,
+		});
+		OscMessage controlMap = new OscMessage( new Object[] {
+			"n_mapn",newSound.getSynthNode(),2,mappedControlsBus,newSound.synth.getNumControls()
+		});
+		
+		// create the amp mapping stuff using curAmpBus, before the increment happens
+		// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
+		OscMessage ampMatchMsg = new OscMessage( new Object[] {
+	    	    "s_new","_scanvox_ampmatch",newSound.getAmpMatchNode(), addAfter, newSound.getSynthNode(),
+	    	    "soundsource",         curAudioBus,
+	    	    "ampbus",      curAmpBus
 	    	});
-			OscMessage beatMap = new OscMessage( new Object[] {
-				"n_set",newSound.getPlayNode(),"clockbus",beatBus
-			});
-			OscMessage synthMessage = new OscMessage( new Object[] {
-				"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
-	    	    "out",         curAudioBus,
-			});
-			OscMessage controlMap = new OscMessage( new Object[] {
-				"n_mapn",newSound.getSynthNode(),2,mappedControlsBus,newSound.synth.getNumControls()
-			});
-			
-			// create the amp mapping stuff using curAmpBus, before the increment happens
-			// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
-			OscMessage ampMatchMsg = new OscMessage( new Object[] {
-		    	    "s_new","_scanvox_ampmatch",newSound.getAmpMatchNode(), addAfter, newSound.getSynthNode(),
-		    	    "soundsource",         curAudioBus,
-		    	    "ampbus",      curAmpBus
-		    	});
 
-			//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
-			//rm lastAudioBusId++;
-			Log.d(TAG,playMsg.toString());
-	    	superCollider.sendMessage( playMsg );
-	    	superCollider.sendMessage( beatMap );
-	    	superCollider.sendMessage( synthMessage );
-	    	superCollider.sendMessage( controlMap );
-	    	superCollider.sendMessage( ampMatchMsg );
-	    	//TODO - DEBUG, remove:
-	    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
-	    	sac.whenSoundAdded ( newSound );
-		} catch (IOException e) {
-			Log.e(TAG, String.format("Error loading tree buffer '%s'",e.getMessage()));
-		} finally {
-			recording = false;
-		}
+		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
+		//rm lastAudioBusId++;
+		Log.d(TAG,playMsg.toString());
+    	superCollider.sendMessage( playMsg );
+    	superCollider.sendMessage( beatMap );
+    	superCollider.sendMessage( synthMessage );
+    	superCollider.sendMessage( controlMap );
+    	superCollider.sendMessage( ampMatchMsg );
+    	//TODO - DEBUG, remove:
+    	superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
 	}
 	
 	/**
@@ -288,36 +338,35 @@ public class SoundManager {
 		}));
 		if (recordWait != null && recordWait.isAlive()) recordWait.interrupt();*/
 	}
-	
+
+	private class WaitListener implements SCMessageManager.OscListener {
+		protected boolean success = false;
+		@Override
+		public void receive(OscMessage msgFromServer) {
+			String type = (String) msgFromServer.get(0);
+			if (type.equals("/fail") || type.equals("/done")) {
+				if (type.equals("/done")) success = true;
+				synchronized(SoundManager.this) {
+					SoundManager.this.notify();
+				}
+			}
+		}
+	}
 	private boolean sendOscAndWaitForDone(OscMessage msg) {
-		while (SCAudio.hasMessages()) SCAudio.getMessage(); // clean out mailbox
+		WaitListener waitListener = new WaitListener();
+		messageManager.register(waitListener, "/fail");
+		messageManager.register(waitListener, "/done");
     	superCollider.sendMessage( msg );
-
-    	// Wait on a positive response from SCAudio
-    	OscMessage msgFromServer=null;
-    	int triesToFail = 10000;
-		while (msgFromServer==null && --triesToFail>0) {
-    		if (SCAudio.hasMessages()) msgFromServer = SCAudio.getMessage();
+    	synchronized(this) {
     		try {
-    			Thread.sleep(5);
-    		} catch (InterruptedException e) {
-    			break;
-    		}
-		}
-		if (msgFromServer==null) {
-			Log.e(TAG,"Did not get a confirmation message back from the server.");
-			Log.d(TAG,msg.toString());
-			return false;	
-		}
-		String firstToken = msgFromServer.get(0).toString();
-		if (!firstToken.equals("/done")) {
-			Log.e(TAG,"Got an unexpected response back from the server.");
-			Log.e(TAG,msgFromServer.toString());
-			Log.d(TAG,msg.toString());
-			return false;
-		}
-
-		return true;
+				wait(50000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    	}
+		messageManager.unregister(waitListener, "/fail");
+		messageManager.unregister(waitListener, "/done");
+		return waitListener.success;
 		
 	}
 	

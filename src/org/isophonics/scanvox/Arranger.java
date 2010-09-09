@@ -69,7 +69,7 @@ public class Arranger extends View {
 	}
 	
 	private void init() {
-		dashboard = new Dashboard(getContext());
+		dashboard = new Dashboard(getContext(),mRedrawHandler);
 		
 		backgroundPaint = new Paint();
 		timeDivisionPaint = new Paint();
@@ -271,8 +271,7 @@ public class Arranger extends View {
 	 * Notifies all relevant objects to start their sound recording activity
 	 */
 	public void startRecording() {
-		soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1());
-		dashboard.startRecording(bufferDuration,mRedrawHandler);
+		soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1(),dashboard.recordMonitor);
 	}
 
 	private class UpdateArrangerCallback implements SoundManager.SoundAddedCallback {
