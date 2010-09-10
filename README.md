@@ -45,6 +45,9 @@ Authors
 * [Alex Shaw](http://www.glastonbridge.com/)
 * [Dan Stowell](http://www.mcld.co.uk/)
 
+The project also uses much code from the main [SuperCollider](http://supercollider.sourceforge.net/) codebase,
+created by James McCartney and with many co-authors.
+
 Development funded by [the Centre for Digital Music at Queen Mary of London](http://www.elec.qmul.ac.uk/digitalmusic/), under EPSRC Platform Grant [EP/E045235/1](http://gow.epsrc.ac.uk/ViewGrant.aspx?GrantRef=EP/E045235/1).
 
 
