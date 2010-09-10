@@ -17,6 +17,7 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -79,6 +80,11 @@ public class ScanVox extends Activity {
             switch(s) {
     		case WELCOME:
     	        setContentView(R.layout.welcome);
+    	        
+    	        // Load local html content for welcome page
+	        	WebView webView = (WebView) findViewById(R.id.webcontent);
+	        	webView.loadUrl("file:///android_asset/welcome/welcome.html");
+    	        
     	        ImageButton rec = (ImageButton) findViewById(R.id.Record);
     	        if (scanVoxIsInitialised) {
 	    	        rec.setOnClickListener(new OnClickListener() {
