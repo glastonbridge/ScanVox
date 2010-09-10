@@ -229,9 +229,8 @@ public class SoundManager {
 						break;
 					case 5:
 						// It's a startingphase message
-						
-						// TODO - we can't make use of this information until the clock is a pure phasor
-						
+						newSound.phase = ((Float)msgFromServer.get(3)).floatValue();
+						Log.d(TAG, "Set phase based on what clock said, as " + newSound.phase);
 						break;
 					}
 				}
@@ -249,19 +248,8 @@ public class SoundManager {
 				}
     		}
     	};
-    	// /tr for start (@TODO: use startingphase above, when ready to do so)
-		SCMessageManager.OscListener startListener = new SCMessageManager.OscListener() {
-			@Override
-			public void receive(OscMessage msgFromServer) {
-				if(((Integer)msgFromServer.get(2)).intValue()==SoundManager.CLOCK_TRIGGER_UID) {
-					newSound.phase = (Float)msgFromServer.get(3);
-					messageManager.unregister(this, "/tr");
-				}
-			}
-		};
 
     	messageManager.register(trListener, "/tr");
-    	messageManager.register(startListener, "/tr");
     	messageManager.register(endListener, "/n_end");
     	OscMessage recordMsg = new OscMessage( new Object[] {
         	    "s_new","_scanvox_rec",newSound.getRecordNode(),addToHead,recordersGroupNode,
