@@ -27,26 +27,24 @@ It analyses the pitch, loudness and timbre of vocal sound, and uses that
 information to control a selection of synths.
 
 The "timbre remapping" technology is taken from Dan Stowell's PhD research.
-For technical details see his thesis: http://www.mcld.co.uk/thesis/
+For technical details see [his thesis](http://www.mcld.co.uk/thesis/)
 
-The audio infrastructure used is SuperCollider-Android:
-http://github.com/glastonbridge/SuperCollider-Android
+The audio infrastructure used is [SuperCollider-Android](http://github.com/glastonbridge/SuperCollider-Android)
 
 
 Source code
 ===========
 
 ScanVox is free software (open source): access the source code at
-http://github.com/glastonbridge/ScanVox/
+[http://github.com/glastonbridge/ScanVox/](http://github.com/glastonbridge/ScanVox/)
 
 
 Authors
 =======
 
-* Alex Shaw   http://www.glastonbridge.com/
-* Dan Stowell http://www.mcld.co.uk/
+* [Alex Shaw](http://www.glastonbridge.com/)
+* [Dan Stowell](http://www.mcld.co.uk/)
 
-Development funded by the Centre for Digital Music at Queen Mary of London
-(http://www.elec.qmul.ac.uk/digitalmusic/), under EPSRC Platform Grant EP/E045235/1.
+Development funded by [the Centre for Digital Music at Queen Mary of London](http://www.elec.qmul.ac.uk/digitalmusic/), under EPSRC Platform Grant [EP/E045235/1](http://gow.epsrc.ac.uk/ViewGrant.aspx?GrantRef=EP/E045235/1).
 
 
