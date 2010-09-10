@@ -3,7 +3,7 @@
 ScanVoxSuperCollider
 # ignore paths to be generated during build
 assets/m*.scsyndef
-bin/**/*
+bin
 gen/**/*
 # ignore mac cruft
 .DS_Store
