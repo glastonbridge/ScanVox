@@ -7,10 +7,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
 //import android.os.Environment;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +31,8 @@ public class ScanVox extends Activity {
 	public static enum UserActivity {
 		WELCOME, RECORDING, ARRANGING, FATAL_ERROR
 	}
+	
+	private PowerManager.WakeLock wakeLock; // For holding the screen on
 	
 	public static final String scanvoxTreeDirectory ="scanvox/treeData/";
 	
@@ -141,7 +145,12 @@ public class ScanVox extends Activity {
 
         activityChooser = new ActivityChooser();
         setUserActivity(UserActivity.WELCOME);
-        Thread.yield();
+
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "ScanVox");
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire();
+        
         arrangement.bpm = DEFAULT_BPM;
 		(new LaunchSCWhenFilesAreReady()).start();
     }
@@ -149,18 +158,22 @@ public class ScanVox extends Activity {
     @Override
     public void onPause() {
     	super.onPause();
-    	superCollider.closeUDP();
-		superCollider.sendQuit();
+    	if (superCollider != null) {
+	    	superCollider.closeUDP();
+			superCollider.sendQuit();
 
-		while (!superCollider.isEnded()) {
-			try {
-				Thread.sleep(50L);
-			} catch (InterruptedException err) {
-				Log.e(TAG,"An interruption happened while ScanVox was waiting for SuperCollider to exit.");
-				err.printStackTrace();
-				break;
+			while (!superCollider.isEnded()) {
+				try {
+					Thread.sleep(50L);
+				} catch (InterruptedException err) {
+					Log.e(TAG,"An interruption happened while ScanVox was waiting for SuperCollider to exit.");
+					err.printStackTrace();
+					break;
+				}
 			}
-		}
+
+    	}
+		if (wakeLock!=null) wakeLock.release();
 		this.finish();
     }
     
