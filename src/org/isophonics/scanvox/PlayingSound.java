@@ -13,6 +13,7 @@ import org.isophonics.scanvox.allocators.NaiveAllocator;
  */
 class PlayingSound {
     private int recordNode=-1;
+    private int playGroupNode=-1;
     private int playNode=-1;
     private int synthNode=-1;
     private int ampMatchNode=-1;
@@ -45,6 +46,15 @@ class PlayingSound {
 	public int getRecordNode() {
 		if (recordNode == -1) recordNode = nodeAllocator.nextID();
 		return recordNode;
+	}
+	/*
+	 * The synths that do the sound synthesis must be placed inside the playGroupNode, 
+	 * so they can be paused/unpaused as one.
+	 * The supervisor (which does the pausing/unpausing) must be outside (before) this group!
+	 */
+	public int getPlayGroupNode() {
+		if (playGroupNode == -1) playGroupNode = nodeAllocator.nextID();
+		return playGroupNode;
 	}
 	public int getPlayNode() {
 		if (playNode == -1) playNode = nodeAllocator.nextID();

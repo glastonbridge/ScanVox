@@ -280,8 +280,11 @@ public class SoundManager {
 		int curAudioBus       = arBusAllocator.nextID();
 		playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
 		Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
+		OscMessage makeGroupMessage = new OscMessage( new Object[] {
+				"g_new", newSound.getPlayGroupNode(), addToTail, playersGroupNode
+			});
 		OscMessage playMsg = new OscMessage( new Object[] {
-    	    "s_new",playController,newSound.getPlayNode(), addToHead, playersGroupNode,
+    	    "s_new",playController,newSound.getPlayNode(), addToHead, newSound.getPlayGroupNode(),
     	    "timbrebuf",   newSound.getRecordBuffer(),
     	    "ampbus",      curAmpBus,
     	    "controlsbus", mappedControlsBus,
@@ -292,7 +295,7 @@ public class SoundManager {
     	    "clockbus",    beatBus
     	});
 		OscMessage synthMessage = new OscMessage( new Object[] {
-			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, playersGroupNode,
+			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, newSound.getPlayGroupNode(),
     	    "out",         curAudioBus,
 		});
 		OscMessage controlMap = new OscMessage( new Object[] {
@@ -310,6 +313,7 @@ public class SoundManager {
 		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
 		//rm lastAudioBusId++;
 		Log.d(TAG,playMsg.toString());
+    	superCollider.sendMessage( makeGroupMessage);
     	superCollider.sendMessage( playMsg );
     	superCollider.sendMessage( synthMessage );
     	superCollider.sendMessage( controlMap );
@@ -331,6 +335,10 @@ public class SoundManager {
 	}
 
 	public void removeSound(PlayingSound sound) {
+		superCollider.sendMessage(new OscMessage(new Object[] {
+				"n_free",sound.getPlayGroupNode()
+		}));
+//TODO: these not needed since the group is freed:
 		superCollider.sendMessage(new OscMessage(new Object[] {
 				"n_free",sound.getPlayNode()
 		}));
