@@ -90,7 +90,8 @@ class PlayingSound {
 		int index = dbampAllocator.nextID();
 		if (index<dbamps.length){ // NB silent fail if too many values...
 			dbamps[index] = val;
-			intamps[index] = Math.max(0, Math.min(maxIntAmp, (int)((val + 60.f) * floatToIntRescaler)));
+			// intamps limited to minimum of 2 (though initialised to 0) so the recorded sound view never has gaps
+			intamps[index] = Math.max(2, Math.min(maxIntAmp, (int)((val + 60.f) * floatToIntRescaler)));
 		}
 	}
 }
