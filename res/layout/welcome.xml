@@ -16,12 +16,16 @@
   android:layout_width="wrap_content"
   android:layout_height="wrap_content"
   >
+<LinearLayout
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:orientation="vertical"
+  >
   <WebView
   android:id="@+id/webcontent"
   android:layout_width="wrap_content"
   android:layout_height="wrap_content"
   />
-  </ScrollView>
   <ImageButton android:id="@+id/Record" android:text="REC"
   android:layout_width="wrap_content"
   android:layout_height="wrap_content"  
@@ -30,5 +34,7 @@
   android:background="#00FFFFFF"
   android:paddingBottom="20px"
   android:src="@drawable/rec" />
+</LinearLayout>
+  </ScrollView>
 
 </LinearLayout>
