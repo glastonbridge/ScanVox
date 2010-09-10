@@ -27,7 +27,7 @@ It analyses the pitch, loudness and timbre of vocal sound, and uses that
 information to control a selection of synths.
 
 The "timbre remapping" technology is taken from Dan Stowell's PhD research.
-For technical details see his thesis: http://www.mcld.co.uk/
+For technical details see his thesis: http://www.mcld.co.uk/thesis/
 
 The audio infrastructure used is SuperCollider-Android:
 http://github.com/glastonbridge/SuperCollider-Android
