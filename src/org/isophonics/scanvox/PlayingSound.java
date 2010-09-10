@@ -14,11 +14,13 @@ import org.isophonics.scanvox.allocators.NaiveAllocator;
 class PlayingSound {
     private int recordNode=-1;
     private int playGroupNode=-1;
+    private int supervisorNode=-1;
     private int playNode=-1;
     private int synthNode=-1;
     private int ampMatchNode=-1;
     private int recordBuffer=-1;
-    private Allocator nodeAllocator, bufferAllocator;
+    private int trigBus=-1;
+    private Allocator nodeAllocator, bufferAllocator, krBusAllocator;
     protected int length; //ms
     protected MappedSynth synth;
     protected boolean isValid = false; // SoundManager will set this true on completion
@@ -30,11 +32,13 @@ class PlayingSound {
 	protected float phase = 0;
     public PlayingSound(
     		Allocator nodeAllocator, 
-    		Allocator bufferAllocator, 
+    		Allocator bufferAllocator,
+    		Allocator krBusAllocator,
     		MappedSynth synthType, 
     		int ampArrayLen) {
     	this.nodeAllocator = nodeAllocator;
     	this.bufferAllocator = bufferAllocator;
+    	this.krBusAllocator = krBusAllocator;
     	this.synth = synthType;
     	
     	this.dbampAllocator = new NaiveAllocator(0);
@@ -52,25 +56,18 @@ class PlayingSound {
 	 * so they can be paused/unpaused as one.
 	 * The supervisor (which does the pausing/unpausing) must be outside (before) this group!
 	 */
-	public int getPlayGroupNode() {
-		if (playGroupNode == -1) playGroupNode = nodeAllocator.nextID();
-		return playGroupNode;
-	}
-	public int getPlayNode() {
-		if (playNode == -1) playNode = nodeAllocator.nextID();
-		return playNode;
-	}
-	public int getSynthNode() {
-		if (synthNode == -1) synthNode = nodeAllocator.nextID();
-		return synthNode;
-	}
+	public int getPlayGroupNode()  { if (playGroupNode  == -1) playGroupNode  = nodeAllocator.nextID(); return playGroupNode ; }
+	public int getSupervisorNode() { if (supervisorNode == -1) supervisorNode = nodeAllocator.nextID(); return supervisorNode; }
+	public int getPlayNode()       { if (playNode       == -1) playNode       = nodeAllocator.nextID(); return playNode      ; }
+	public int getSynthNode()      { if (synthNode      == -1) synthNode      = nodeAllocator.nextID(); return synthNode     ; }
+	public int getAmpMatchNode()   { if (ampMatchNode   == -1) ampMatchNode   = nodeAllocator.nextID(); return ampMatchNode  ; }
 	public int getRecordBuffer() {
 		if (recordBuffer == -1) recordBuffer = bufferAllocator.nextID();
 		return recordBuffer;
 	}
-	public int getAmpMatchNode() {
-		if (ampMatchNode == -1) ampMatchNode = nodeAllocator.nextID();
-		return ampMatchNode;
+	public int getTrigBus() {
+		if (trigBus == -1) trigBus = krBusAllocator.nextID();
+		return trigBus;
 	}
 	public void pushDbampValue(float val){
 		int index = dbampAllocator.nextID();

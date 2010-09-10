@@ -172,7 +172,7 @@ public class SoundManager {
     public PlayingSound allocateBuffer(int size, MappedSynth synthType) throws SoundManagerException {
     	recording = true;
     	long ampArrayLen = ((SCAudio.sampleRateInHz * size) / 512) /4000; // 512 is hop size of features, 4 is decimation of db-samplerate in recsynth, 1000 is millisecs to secs 
-    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator,synthType, (int)ampArrayLen);
+    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator, krBusAllocator, synthType, (int)ampArrayLen);
     	newSound.length = size;
     	int bufferChannels  = bufferChannelsDefault;  //
     	OscMessage bufferAllocMsg = new OscMessage( new Object[] {
@@ -283,17 +283,25 @@ public class SoundManager {
 		OscMessage makeGroupMessage = new OscMessage( new Object[] {
 				"g_new", newSound.getPlayGroupNode(), addToTail, playersGroupNode
 			});
+		// NB unlike the other synths, the supervisor must not be added as a child of the playGroup - instead use addBefore  
+		OscMessage supervisorMsg = new OscMessage( new Object[] {
+	    	    "s_new","_scanvox_supervisor",newSound.getSupervisorNode(), addBefore, newSound.getPlayGroupNode(),
+	    	    "myphase", 	   newSound.phase,
+	    	    "tgtgroupid",  newSound.getPlayGroupNode(),
+	    	    "timbrebuf",   newSound.getRecordBuffer(), // timbrebuf is passed in so it can know duration
+	    	    "clockbus",    beatBus,
+	    	    "trigbus",     newSound.getTrigBus()
+	    	});
 		OscMessage playMsg = new OscMessage( new Object[] {
-    	    "s_new",playController,newSound.getPlayNode(), addToHead, newSound.getPlayGroupNode(),
-    	    "timbrebuf",   newSound.getRecordBuffer(),
-    	    "ampbus",      curAmpBus,
-    	    "controlsbus", mappedControlsBus,
-    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
-    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
-    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
-    	    "myphase", 	   newSound.phase,
-    	    "clockbus",    beatBus
-    	});
+	    	    "s_new",playController,newSound.getPlayNode(), addToHead, newSound.getPlayGroupNode(),
+	    	    "timbrebuf",   newSound.getRecordBuffer(),
+	    	    "ampbus",      curAmpBus,
+	    	    "controlsbus", mappedControlsBus,
+	    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
+	    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
+	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
+	    	    "trigbus",     newSound.getTrigBus()
+	    	});
 		OscMessage synthMessage = new OscMessage( new Object[] {
 			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, newSound.getPlayGroupNode(),
     	    "out",         curAudioBus,
@@ -313,7 +321,8 @@ public class SoundManager {
 		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
 		//rm lastAudioBusId++;
 		Log.d(TAG,playMsg.toString());
-    	superCollider.sendMessage( makeGroupMessage);
+		superCollider.sendMessage( makeGroupMessage);
+		superCollider.sendMessage( supervisorMsg);
     	superCollider.sendMessage( playMsg );
     	superCollider.sendMessage( synthMessage );
     	superCollider.sendMessage( controlMap );
@@ -336,14 +345,10 @@ public class SoundManager {
 
 	public void removeSound(PlayingSound sound) {
 		superCollider.sendMessage(new OscMessage(new Object[] {
+				"n_free",sound.getSupervisorNode()
+		}));
+		superCollider.sendMessage(new OscMessage(new Object[] {
 				"n_free",sound.getPlayGroupNode()
-		}));
-//TODO: these not needed since the group is freed:
-		superCollider.sendMessage(new OscMessage(new Object[] {
-				"n_free",sound.getPlayNode()
-		}));
-		superCollider.sendMessage(new OscMessage(new Object[] {
-				"n_free",sound.getSynthNode()
 		}));
 	}
 

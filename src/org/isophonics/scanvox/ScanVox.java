@@ -35,6 +35,7 @@ public class ScanVox extends Activity {
 	public static final String[] mySynthDefs = {
 		"_scanvox_rec.scsyndef",
 		"clockodile.scsyndef",
+		"_scanvox_supervisor.scsyndef",
 		"_scanvox_playcontrols1.scsyndef",
 		"_scanvox_playcontrols2.scsyndef",
 		"_scanvox_playcontrols3.scsyndef",

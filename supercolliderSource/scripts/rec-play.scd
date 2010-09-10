@@ -33,21 +33,18 @@ SynthDef(\_scanvox_rec, {  |timbrebuf=0, clockbus=0|
 	// "playback" synthdef - takes multichannel buffer and writes controls to some bus.
 	// Assumes that it resets its playback position to the start whenever the clockbus contains a value matching myphase.
 	SynthDef(("_scanvox_playcontrols"++numparams).asSymbol, { |timbrebuf=0, treebuf=0, trevbuf=0, 
-				controlsbus=0, ampbus=0, clockbus=0, myphase=0, paramShouldBePitch= -1|
-		var clock, ana, amp, traj, index, controls, resettrig, bufferIsDone;
+				controlsbus=0, ampbus=0, trigbus=0, paramShouldBePitch= -1|
+		var ana, amp, traj, index, controls, resettrig, bufferIsDone;
 		
-		clock = In.kr(clockbus);
-		//clock.poll(clock, label: "clock (recv in playcontrols)");
-		
-		resettrig = Trig1.kr((clock - myphase).wrap(0,1) < (1/16), 0);
-		clock.poll(resettrig, label: "clock MATCH (recv in playcontrols)");
+		resettrig = In.kr(trigbus);
+		resettrig.poll(resettrig, label: "clock MATCH (recv in playcontrols)");
 		
 		ana = PlayBuf.kr(FeatureSet1.scanvox1.list.size, timbrebuf, (SampleRate.ir / ControlRate.ir) / 512, resettrig);
 		bufferIsDone = Done.kr(ana);
 		
 		amp = ana[1];
 		amp = amp * SetResetFF.kr(resettrig); // silence amplitude until first trigger caught
-		amp = amp * (bufferIsDone < 0.1); // silence amplitude when done
+//TO REMOVE (USE PAUSING INSTEAD)		amp = amp * (bufferIsDone < 0.1); // silence amplitude when done
 		Out.kr(ampbus, amp);
 		
 		traj = ana[2..];
