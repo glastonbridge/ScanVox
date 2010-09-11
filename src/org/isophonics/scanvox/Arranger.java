@@ -17,6 +17,7 @@
 */
 package org.isophonics.scanvox;
 
+import java.io.IOException;
 import java.util.Hashtable;
 
 import net.sf.supercollider.android.OscMessage;
@@ -169,6 +170,7 @@ public class Arranger extends View {
 	 */
 	@Override
 	protected void onDraw(Canvas c) {
+		if(soundManager.recording) return; // best chance for good quality
 		height = c.getHeight();
 		gridDimensions.x = c.getWidth()/arrangement.length;
 		c.drawRect(0,0,c.getWidth(),height,backgroundPaint);
@@ -319,11 +321,16 @@ public class Arranger extends View {
 					}
 				}
 				if (newSynth!=null) {
-					PlayingSound mySound = draggingSoundView.sound.id;
-					mySound.synth = newSynth;
-					soundManager.removeSynth(mySound);
-					soundManager.addSynth(mySound);
-					dashboard.draggingPaint = null;
+					try {
+						PlayingSound mySound = draggingSoundView.sound.id;
+						mySound.synth = newSynth;
+						soundManager.removeSynth(mySound);
+						soundManager.addSynth(mySound);
+					} catch (IOException io) {
+						io.printStackTrace();
+					} finally {
+						dashboard.draggingPaint = null;
+					}
 				}
 			}
 			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)

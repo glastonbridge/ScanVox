@@ -272,17 +272,13 @@ public class SoundManager {
 	}
     
     /**
-     * Start doing controls playback for consumption by a synth.
-     * Does not produce audio output 
+     * Set up the housekeeping for the sound
      * 
      * @param bufferId
      * @throws IOException 
      */
-	private void startPlayback(
+	public void startPlayback(
 			PlayingSound newSound) throws IOException {
-		String playController;
-		playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
-		Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
 		OscMessage makeGroupMessage = new OscMessage( new Object[] {
 				"g_new", newSound.getPlayGroupNode(), addToTail, playersGroupNode
 			});
@@ -295,6 +291,25 @@ public class SoundManager {
 	    	    "clockbus",    beatBus,
 	    	    "trigbus",     newSound.getTrigBus()
 	    	});
+		
+		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
+		//rm lastAudioBusId++;
+		superCollider.sendMessage( makeGroupMessage);
+		superCollider.sendMessage( supervisorMsg);
+    	//TODO - DEBUG, remove:
+    	//superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
+	}
+	
+	/**
+	 * Adds a synthesizer to be controlled by a playingsound,
+	 * based on the MappedSynth associated with it.
+	 */
+	public void addSynth(
+			PlayingSound newSound) throws IOException {
+
+		String playController;
+		playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
+		Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
 		OscMessage playMsg = new OscMessage( new Object[] {
 	    	    "s_new",playController,newSound.getPlayNode(), addToHead, newSound.getPlayGroupNode(),
 	    	    "timbrebuf",   newSound.getRecordBuffer(),
@@ -305,23 +320,6 @@ public class SoundManager {
 	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
 	    	    "trigbus",     newSound.getTrigBus()
 	    	});
-		
-		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
-		//rm lastAudioBusId++;
-		Log.d(TAG,playMsg.toString());
-		superCollider.sendMessage( makeGroupMessage);
-		superCollider.sendMessage( supervisorMsg);
-    	superCollider.sendMessage( playMsg );
-    	//TODO - DEBUG, remove:
-    	//superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
-	}
-	
-	/**
-	 * Adds a synthesizer to be controlled by a playingsound,
-	 * based on the MappedSynth associated with it.
-	 */
-	public void addSynth(
-			PlayingSound newSound) {
 
 		OscMessage synthMessage = new OscMessage( new Object[] {
 			"s_new",newSound.synth.getSynthDefName(),newSound.getSynthNode(), addToTail, newSound.getPlayGroupNode(),
@@ -338,25 +336,28 @@ public class SoundManager {
 	    	    "soundsource",         newSound.getAudioBus(),
 	    	    "ampbus",      newSound.getAmpBus()
 	    	});
+		
+		superCollider.sendMessage( playMsg );	
     	superCollider.sendMessage( synthMessage );
     	superCollider.sendMessage( ampMatchMsg );
     	superCollider.sendMessage( controlMap );
 	}
 
 	/**
-	 * Get rid of the synth portion of a playingsound.  Does not
-	 * stop the actual playback, and is intended for use in swapping
+	 * Get rid of the current playing and synthesis components
+	 * without removing buffers.  This is intended for use in swapping
 	 * out synthesizers.
 	 */
 	public void removeSynth(PlayingSound sound) {
-		OscMessage rmSynthMessage = new OscMessage( new Object[] {
-				"n_free", sound.getSynthNode()	
-			});
-		superCollider.sendMessage( rmSynthMessage );
-		OscMessage rmAmpMessage = new OscMessage( new Object[] {
-				"n_free", sound.getAmpMatchNode()	
-		});
-		superCollider.sendMessage( rmAmpMessage );
+		removeNode(sound.getSynthNode());
+		removeNode(sound.getAmpMatchNode());
+		removeNode(sound.getPlayNode());
+	}
+	
+	private void removeNode(int node) {
+		superCollider.sendMessage(new OscMessage(new Object[] {
+				"n_free", node
+		}));
 	}
 	
 	/**

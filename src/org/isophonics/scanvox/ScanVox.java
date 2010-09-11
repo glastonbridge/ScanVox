@@ -69,12 +69,21 @@ public class ScanVox extends Activity {
 		"_scanvox_playcontrols8.scsyndef",
 		"_scanvox_playcontrols9.scsyndef",
 		"_scanvox_ampmatch.scsyndef",
-		"_maptsyn_ay1.scsyndef"
+		"_maptsyn_ay1.scsyndef",
+		"_maptsyn_gendy1.scsyndef",
+		"_maptsyn_supersimple.scsyndef",
+		"_maptsyn_moogy1.scsyndef", 
 	};
 	
 	public static final String[] myTreeFiles = {
 		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.0.aiff",
-		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.trevmap1.aiff"
+		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.trevmap1.aiff",
+		"mixedvoicedata_MappedSynthGendy1_tcbuf_d5m12p99.0.aiff",
+		"mixedvoicedata_MappedSynthGendy1_tcbuf_d5m12p99.trevmap1.aiff",
+		"mixedvoicedata_MappedSynthMoogy1_tcbuf_d5m12p99.0.aiff",
+		"mixedvoicedata_MappedSynthMoogy1_tcbuf_d5m12p99.trevmap1.aiff",
+		"mixedvoicedata_MappedSynthSuperSimple_tcbuf_d5m12p99.0.aiff",
+		"mixedvoicedata_MappedSynthSuperSimple_tcbuf_d5m12p99.trevmap1.aiff",
 	};
 	
 	public static final MappedSynth[] myMappedSynths = {
