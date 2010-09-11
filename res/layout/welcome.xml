@@ -1,40 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="fill_parent"
-  android:layout_height="fill_parent"
-  android:orientation="vertical"
-  >
-  <TextView 
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"
-  android:layout_alignParentTop="true"
-  android:layout_centerHorizontal="true"
-  android:text="[scanvox]"
-  style="@style/Title" />
-  <ScrollView
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"
-  >
-<LinearLayout
-  android:layout_width="fill_parent"
-  android:layout_height="fill_parent"
-  android:orientation="vertical"
-  >
-  <WebView
-  android:id="@+id/webcontent"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"
-  />
-  <ImageButton android:id="@+id/Record" android:text="REC"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content"  
-  android:layout_alignParentBottom="true"
-  android:layout_centerHorizontal="true"
-  android:background="#00FFFFFF"
-  android:paddingBottom="20px"
-  android:src="@drawable/rec" />
-</LinearLayout>
-  </ScrollView>
-
-</LinearLayout>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent" android:layout_height="fill_parent">
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:orientation="vertical">
+		<WebView android:id="@+id/webcontent" android:layout_width="wrap_content"
+			android:layout_height="wrap_content" />
+		<ImageButton android:id="@+id/Record" android:text="REC"
+			android:layout_width="wrap_content" android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true"
+			android:layout_centerHorizontal="true" android:background="#00FFFFFF"
+			android:paddingBottom="10px" android:src="@drawable/rec" />
+	</LinearLayout>
+</ScrollView>

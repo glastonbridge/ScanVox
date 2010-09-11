@@ -178,6 +178,7 @@ public class ScanVox extends Activity {
     	
         super.onCreate(savedInstanceState);
 
+    	SCAudio.sampleRateInHz = 44100;
 
         activityChooser = new ActivityChooser();
         setUserActivity(UserActivity.WELCOME);
