@@ -37,6 +37,7 @@ import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import net.sf.supercollider.android.SCAudio;
@@ -74,6 +75,14 @@ public class ScanVox extends Activity {
 	public static final String[] myTreeFiles = {
 		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.0.aiff",
 		"mixedvoicedata_MappedSynthAY1_tcbuf_d5m12p99.trevmap1.aiff"
+	};
+	
+	public static final MappedSynth[] myMappedSynths = {
+		new MappedSynth1AY1(),
+		new MappedSynth1Gendy1(),
+		new MappedSynth1GrainAmen1(),
+		new MappedSynth1Moogy1(),
+		new MappedSynth1SuperSimple()
 	};
 	
 	SCAudio superCollider;
@@ -120,6 +129,10 @@ public class ScanVox extends Activity {
     		case ARRANGING:
     			setContentView(R.layout.arranger);
     			arranger = (Arranger) findViewById(R.id.arranger);
+    			Dashboard d = (Dashboard) findViewById(R.id.dashboard);
+    			arranger.setDashboard(d);
+    			ListView p = (ListView) findViewById(R.id.synthpalette);
+    			d.makeSynthList(p);
     			arranger.backgroundPaint.setColor(getResources().getColor(android.R.color.background_light));
     			arranger.rowDivisionPaint.setColor(getResources().getColor(android.R.color.background_dark));
     			arranger.timeDivisionPaint.setColor(getResources().getColor(android.R.color.primary_text_light));

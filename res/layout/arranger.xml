@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.isophonics.scanvox.Arranger
+<RelativeLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/editlayout"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  android:gravity="center" >
+<org.isophonics.scanvox.Arranger
   android:id="@+id/arranger"
   android:layout_width="fill_parent"
   android:layout_height="fill_parent"
->
-</org.isophonics.scanvox.Arranger>
+/>
+<org.isophonics.scanvox.Dashboard
+  android:id="@+id/dashboard"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+  android:layout_alignParentBottom="true" />
+<ListView
+  android:id="@+id/synthpalette"
+  android:layout_width="250dip"
+  android:layout_centerInParent="true"
+  android:layout_height="wrap_content"
+  android:visibility="invisible" />
+</RelativeLayout>

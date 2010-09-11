@@ -49,7 +49,6 @@ public class SoundManager {
 	private static final String TAG = "SoundManager";
 	private static final int addToHead = 0;
 	private static final int addToTail = 1;
-	@SuppressWarnings("unused")
 	private static final int addBefore = 2;
 	private static final int addAfter  = 3;
 	@SuppressWarnings("unused")
@@ -162,11 +161,12 @@ public class SoundManager {
     		public void run() {
     			try {
     				/**
-    				 * How to add a sound, in four simple steps:
+    				 * How to add a sound, in fixe simple steps:
     				 */
     				PlayingSound newSound = allocateBuffer(size, synthType);
     				record(newSound, recordListener);
-    				setSynth(newSound);
+    				startPlayback(newSound);
+    				addSynth(newSound);
     		    	sac.whenSoundAdded ( newSound );
     			} catch (Exception e) {
     				e.printStackTrace();
@@ -189,7 +189,7 @@ public class SoundManager {
     public PlayingSound allocateBuffer(int size, MappedSynth synthType) throws SoundManagerException {
     	recording = true;
     	long ampArrayLen = ((SCAudio.sampleRateInHz * size) / 512) /4000; // 512 is hop size of features, 4 is decimation of db-samplerate in recsynth, 1000 is millisecs to secs 
-    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator, krBusAllocator, synthType, (int)ampArrayLen);
+    	PlayingSound newSound = new PlayingSound(nodeAllocator, bufferAllocator, krBusAllocator, arBusAllocator, synthType, (int)ampArrayLen);
     	newSound.length = size;
     	int bufferChannels  = bufferChannelsDefault;  //
     	OscMessage bufferAllocMsg = new OscMessage( new Object[] {
@@ -284,17 +284,15 @@ public class SoundManager {
 	}
     
     /**
-     * start doing audio playback using a new synthesizer
+     * Start doing controls playback for consumption by a synth.
+     * Does not produce audio output 
      * 
      * @param bufferId
      * @throws IOException 
      */
-	private void setSynth(
+	private void startPlayback(
 			PlayingSound newSound) throws IOException {
 		String playController;
-		int curAmpBus         = krBusAllocator.nextID();
-		int mappedControlsBus = krBusAllocator.nextIDs(newSound.synth.getNumControls());
-		int curAudioBus       = arBusAllocator.nextID();
 		playController = "_scanvox_playcontrols" + newSound.synth.getNumControls();
 		Log.d(TAG, String.format("To control synth '%s', selected controller synth '%s'", newSound.synth.getLabel(), playController));
 		OscMessage makeGroupMessage = new OscMessage( new Object[] {
@@ -312,40 +310,65 @@ public class SoundManager {
 		OscMessage playMsg = new OscMessage( new Object[] {
 	    	    "s_new",playController,newSound.getPlayNode(), addToHead, newSound.getPlayGroupNode(),
 	    	    "timbrebuf",   newSound.getRecordBuffer(),
-	    	    "ampbus",      curAmpBus,
-	    	    "controlsbus", mappedControlsBus,
+	    	    "ampbus",      newSound.getAmpBus(),
+	    	    "controlsbus", newSound.getControlsBus(),
 	    	    "paramShouldBePitch",newSound.synth.getParamShouldBePitch(),
 	    	    "treebuf",     treeBuffer(newSound.synth.getTreeFileName()),
 	    	    "trevbuf",     treeBuffer(newSound.synth.getTrevmapFileName()),
 	    	    "trigbus",     newSound.getTrigBus()
 	    	});
-		OscMessage synthMessage = new OscMessage( new Object[] {
-			"s_new","_maptsyn_ay1",newSound.getSynthNode(), addToTail, newSound.getPlayGroupNode(),
-    	    "out",         curAudioBus,
-		});
-		OscMessage controlMap = new OscMessage( new Object[] {
-			"n_mapn",newSound.getSynthNode(),2,mappedControlsBus,newSound.synth.getNumControls()
-		});
 		
-		// create the amp mapping stuff using curAmpBus, before the increment happens
-		// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
-		OscMessage ampMatchMsg = new OscMessage( new Object[] {
-	    	    "s_new","_scanvox_ampmatch",newSound.getAmpMatchNode(), addAfter, newSound.getSynthNode(),
-	    	    "soundsource",         curAudioBus,
-	    	    "ampbus",      curAmpBus
-	    	});
-
 		//rm lastControlBusId += synthType.getNumControls() + 1; // skip enough for ampbus and the controlsses
 		//rm lastAudioBusId++;
 		Log.d(TAG,playMsg.toString());
 		superCollider.sendMessage( makeGroupMessage);
 		superCollider.sendMessage( supervisorMsg);
     	superCollider.sendMessage( playMsg );
-    	superCollider.sendMessage( synthMessage );
-    	superCollider.sendMessage( controlMap );
-    	superCollider.sendMessage( ampMatchMsg );
     	//TODO - DEBUG, remove:
     	//superCollider.sendMessage( new OscMessage(new Object[]{"g_dumpTree", 0, 1}) );
+	}
+	
+	/**
+	 * Adds a synthesizer to be controlled by a playingsound,
+	 * based on the MappedSynth associated with it.
+	 */
+	public void addSynth(
+			PlayingSound newSound) {
+
+		OscMessage synthMessage = new OscMessage( new Object[] {
+			"s_new",newSound.synth.getSynthDefName(),newSound.getSynthNode(), addToTail, newSound.getPlayGroupNode(),
+    	    "out",         newSound.getAudioBus(),
+		});
+		OscMessage controlMap = new OscMessage( new Object[] {
+			"n_mapn",newSound.getSynthNode(),2,newSound.getControlsBus(),newSound.synth.getNumControls()
+		});		
+
+		// create the amp mapping stuff using curAmpBus, before the increment happens
+		// must send audio from lastAudioBus to 0, and must come AFTER the synth synth
+		OscMessage ampMatchMsg = new OscMessage( new Object[] {
+	    	    "s_new","_scanvox_ampmatch",newSound.getAmpMatchNode(), addAfter, newSound.getSynthNode(),
+	    	    "soundsource",         newSound.getAudioBus(),
+	    	    "ampbus",      newSound.getAmpBus()
+	    	});
+    	superCollider.sendMessage( synthMessage );
+    	superCollider.sendMessage( ampMatchMsg );
+    	superCollider.sendMessage( controlMap );
+	}
+
+	/**
+	 * Get rid of the synth portion of a playingsound.  Does not
+	 * stop the actual playback, and is intended for use in swapping
+	 * out synthesizers.
+	 */
+	public void removeSynth(PlayingSound sound) {
+		OscMessage rmSynthMessage = new OscMessage( new Object[] {
+				"n_free", sound.getSynthNode()	
+			});
+		superCollider.sendMessage( rmSynthMessage );
+		OscMessage rmAmpMessage = new OscMessage( new Object[] {
+				"n_free", sound.getAmpMatchNode()	
+		});
+		superCollider.sendMessage( rmAmpMessage );
 	}
 	
 	/**

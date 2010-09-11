@@ -23,10 +23,18 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * Draws buttons and handles their clicks.  Buttons are given IDs 
@@ -34,35 +42,103 @@ import android.graphics.drawable.Drawable;
  * is used particularly by Arranger to determine when a sound needs 
  * trashing.
  * 
+ * @TODO: would this class be better as a View?  We're making more
+ * use of the measure/layout model now
+ * 
  * @author alex shaw
  *
  */
-public class Dashboard extends Drawable {
+public class Dashboard extends View {
+
+	public Dashboard(Context context, AttributeSet attrs) {
+		super(context, attrs);
+	}
 
 	private int buttonHeight = 50;
-	public static final int trashId = 0, recordId = 1;
+	public static final int trashId = 0, recordId = 1, synthId = 2;
+	private static final String TAG = "Dashboard";
 	protected int height; // Needed for locating buttons that have been drawn
 	private Arranger.RefreshHandler refreshHandler;
-	
+	private ListView synthPalette;
+	private MappedSynth[] synthList;
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
-	public Bitmap[] buttonImages = new Bitmap[2]; // The currently-visible buttons
+	public Bitmap[] buttonImages = new Bitmap[3]; // The currently-visible buttons
 	private Bitmap waitButton, recButton; // buttonImages 
 	
-	public Dashboard(Context c, RefreshHandler refreshHandler) {	
+	// @TODO: this is just a stop-gap while i transfer dashboard-related stuff here
+	private Arranger parent;
+	
+	public void init(Arranger parent, RefreshHandler refreshHandler, MappedSynth[] synthList) {	
 
+		this.parent = parent;
 		buttonPaint = new Paint(); // used only on bitmaps, doesn't do very much
 		buttonPaint.setAntiAlias(false);
 		
-		buttonImages[trashId]  = BitmapFactory.decodeResource(c.getResources(), R.drawable.bin);
-		buttonImages[recordId] = BitmapFactory.decodeResource(c.getResources(), R.drawable.rec);
+		buttonImages[trashId]  = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.bin);
+		buttonImages[recordId] = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.rec);
+		buttonImages[synthId]  = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.wave);
 		recButton = buttonImages[recordId];
-		waitButton = BitmapFactory.decodeResource(c.getResources(), R.drawable.wait);
+		waitButton = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.wait);
 
 		buttonHeight     = buttonImages[0].getHeight();
 		this.refreshHandler = refreshHandler;
 		
+		this.synthList = synthList;
 	}
+	
+	/**
+	 * Construct a listview for showing synths in a palette
+	 */
+	public void makeSynthList(ListView synthPalette) {
+		this.synthPalette = synthPalette;
+		synthPalette.setBackgroundColor(0xCCFFFFFF);
+		synthPalette.setAdapter(new ArrayAdapter<MappedSynth>(
+				getContext(),
+				android.R.layout.simple_list_item_1,
+				synthList));
+		synthPalette.setOnItemClickListener(new OnItemClickListener() {
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+					long arg3) {
+				draggingPaint = (TextView) arg1;
+				showSynthPalette(false);
+				Toast.makeText(getContext(), "Tap a sound to change its synth", Toast.LENGTH_SHORT).show();
+			}
+		});
+		synthPalette.setClickable(true);
+	}
+	
+	TextView draggingPaint;
+	
+	/**
+	 * Measures the space - for the synth palette primarily
+	 */
+/*	public void onMeasure(int width, int height) {
+		super.onMeasure(width, height);
+		this.height = height;
+		synthPalette.measure(
+				MeasureSpec.makeMeasureSpec(300, MeasureSpec.AT_MOST),
+				MeasureSpec.makeMeasureSpec(height-buttonHeight, MeasureSpec.AT_MOST));		
+	}*/
+	
+	/**
+	 * lay out the synth palette
+	 */
+/*	public void onLayout(boolean changed, int l,int t,int r,int b) {
+		Rect synthButton = locateButton(synthId);
+		int centreX = ( synthButton.left + synthButton.right)/2;
+		int paletteWidth2 = synthPalette.getMeasuredWidth() /2;
+
+		synthPalette.layout(
+				centreX - paletteWidth2, 
+				synthButton.bottom - synthPalette.getMeasuredHeight(), 
+				centreX + paletteWidth2,
+				synthButton.top);
+	}
+*/	
+	/**
+	 * Toggle synth list visibility
+	 */
 
 	/**
 	 * Update the graphics during a recording session
@@ -102,6 +178,22 @@ public class Dashboard extends Drawable {
 		}
 		for (int i=0; i<buttonImages.length; ++i)
 			canvas.drawBitmap(buttonImages[i],null, locateButton(i),buttonPaint);
+		if (getSynthPaletteVisibility()) {
+			Log.d(TAG,String.format("palette %d,%d,%d,%d",
+					synthPalette.getLeft(),
+					synthPalette.getTop(),
+					synthPalette.getWidth(),
+					synthPalette.getHeight()));
+			canvas.clipRect(
+					synthPalette.getLeft(), 
+					synthPalette.getTop(), 
+					synthPalette.getRight(),
+					synthPalette.getBottom());
+			canvas.translate(
+					synthPalette.getLeft(), 
+					synthPalette.getTop());
+			synthPalette.draw(canvas);
+		}
 	}
 		
 	/**
@@ -141,16 +233,66 @@ public class Dashboard extends Drawable {
 		}
 		return -1;
 	}
-	
-	@Override
-	public int getOpacity() { return 0; }
-	@Override
-	public void setAlpha(int alpha) {}
-	@Override
-	public void setColorFilter(ColorFilter cf) {}
 
 	public void stopRecording() { 
 		isRecording= false; 
 		buttonImages[recordId] = recButton;
+	}
+	
+	public boolean onTouchEvent(MotionEvent event) {
+		if (getSynthPaletteVisibility()) {
+			if (event.getAction() == MotionEvent.ACTION_UP) {
+				synthPalette.performClick();
+			}
+			if (synthPalette.dispatchTouchEvent(event)) {
+				invalidate();
+				return true;
+			}
+		}
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			int buttonId = identifyButton((int)event.getX(), (int)event.getY());
+			if (buttonId != -1) {
+				if (buttonId == Dashboard.recordId) {
+					if(parent.soundManager!=null) {
+						if (parent.soundManager.recording) {
+							parent.soundManager.stopRecording();
+							stopRecording();
+						} else {
+							parent.startRecording();
+						}
+					}
+				} else if (buttonId == Dashboard.trashId) {
+					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT).show();
+				} else if (buttonId == Dashboard.synthId) {
+					showSynthPalette(! getSynthPaletteVisibility());
+					return true;
+				}
+			}
+		} else if (event.getAction()==MotionEvent.ACTION_UP ) {
+			if (parent.draggingSoundView != null) {
+				int buttonId = identifyButton((int)event.getX(), (int)event.getY());
+				if (buttonId == Dashboard.trashId) {
+					parent.soundManager.removeSound(parent.draggingSoundView.sound.id);
+					parent.draggingSoundView = null;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Switch the synth palette visibility
+	 * 
+	 * @param synthPaletteOpen true to show, false to hide
+	 */
+	private void showSynthPalette(boolean synthPaletteOpen) {
+		synthPalette.setVisibility(
+				synthPaletteOpen?View.VISIBLE:View.INVISIBLE
+		);
+	}
+
+	private boolean getSynthPaletteVisibility() {
+		return synthPalette.getVisibility() == View.VISIBLE;
 	}
 }

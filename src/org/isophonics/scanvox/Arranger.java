@@ -75,7 +75,7 @@ public class Arranger extends View {
 	protected GridDimensions gridDimensions = new GridDimensions();
 	private int height = 320; // will be updated later
 	private Dashboard dashboard;
-	private SoundManager soundManager;
+	SoundManager soundManager;
 	
 	protected Arrangement arrangement=new Arrangement(0);
 
@@ -91,8 +91,12 @@ public class Arranger extends View {
 		init();
 	}
 	
+	public void setDashboard(Dashboard d) {
+		dashboard = d;
+		dashboard.init(this, refreshHandler, ScanVox.myMappedSynths);
+	}
+	
 	private void init() {
-		dashboard = new Dashboard(getContext(),refreshHandler);
 		
 		backgroundPaint = new Paint();
 		timeDivisionPaint = new Paint();
@@ -108,7 +112,6 @@ public class Arranger extends View {
 		gridDimensions.x = getWidth()/arrangement.length;
 		height = getHeight();
 		
-		invalidate();
 	}
 	
 	/**
@@ -154,7 +157,7 @@ public class Arranger extends View {
 		}
 	}
 	
-	private SoundView draggingSoundView = null;
+	SoundView draggingSoundView = null;
 	private float soundBeingMovedX, soundBeingMovedY;
 	/** The distance between the top left corner and where you're actually touching */
 	private float soundBeingMovedHandleX, soundBeingMovedHandleY; 
@@ -220,15 +223,27 @@ public class Arranger extends View {
 				((SoundView)soundViews.get(s)).draw(c);
 			} else {
 				SoundView newSoundView = new SoundView(getContext(), s, gridDimensions);
+				// measuring is done here, as sounds are added in an ad-hoc way
 				newSoundView.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
 				newSoundView.layout((int)leftIndex,(int)topIndex,(int)rightIndex,(int)bottomIndex);
 				soundViews.put(s, newSoundView);
 				newSoundView.draw(c);
 			}
-			//drawSound(c,s, s.getStartTime()*gridDimensions.x, rowNum*gridDimensions.y);
 		}
 	}
 
+	//@Override
+	/*protected void onMeasure(int width, int height) {
+		super.onMeasure(width, height);
+		dashboard.measure(getMeasuredWidth(), getMeasuredHeight());
+	}*/
+	
+	//@Override
+	/*protected void onLayout(boolean changed,int l,int t, int r, int b) {
+		super.onLayout(changed, l, t, r, b);
+		dashboard.layout(l, t, r, b);
+	}*/
+	
     private RefreshHandler refreshHandler = new RefreshHandler();
 
     class RefreshHandler extends Handler {
@@ -242,8 +257,7 @@ public class Arranger extends View {
             sendEmptyMessage(0);
         }
     };
-
-	
+    
     private long lastUpdateTime = 0;
     
 	/**
@@ -262,6 +276,11 @@ public class Arranger extends View {
 				&& event.getAction() == MotionEvent.ACTION_MOVE) 
 			return true;
 		lastUpdateTime = now;
+		
+		if (dashboard.onTouchEvent(event)) {
+			invalidate();
+			return true;
+		}
 		
 		if (event.getAction()==MotionEvent.ACTION_DOWN) {
 			if ( draggingSoundView != null ) {
@@ -285,36 +304,28 @@ public class Arranger extends View {
 					return true;
 				}
 			} 
-			// DASHBOARD FUNCTIONS
-			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
-			if (buttonId != -1) {
-				if (buttonId == Dashboard.recordId) {
-					if(soundManager!=null) {
-						if (soundManager.recording) {
-							soundManager.stopRecording();
-							dashboard.stopRecording();
-						} else {
-							startRecording();
-						}
-					}
-				} else if (buttonId == Dashboard.trashId) {
-					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT).show();
-				}
-			}
 		} else if (event.getAction()==MotionEvent.ACTION_MOVE) {
 			soundBeingMovedX = event.getX() - soundBeingMovedHandleX;
 			soundBeingMovedY = event.getY() - soundBeingMovedHandleY;
 			invalidate();
 			return true;
 		} else if (event.getAction()==MotionEvent.ACTION_UP && draggingSoundView != null) {
-			int buttonId = dashboard.identifyButton((int)event.getX(), (int)event.getY());
-			if (buttonId == Dashboard.trashId) {
-				soundManager.removeSound(draggingSoundView.sound.id);
-				draggingSoundView = null;
-				invalidate();
-				return true;
+			if (dashboard.draggingPaint!=null) {
+				MappedSynth newSynth = null;
+				for (MappedSynth i : ScanVox.myMappedSynths) {
+					if (i.getLabel().equals(dashboard.draggingPaint.getText().toString())) {
+						newSynth = i;
+						break;
+					}
+				}
+				if (newSynth!=null) {
+					PlayingSound mySound = draggingSoundView.sound.id;
+					mySound.synth = newSynth;
+					soundManager.removeSynth(mySound);
+					soundManager.addSynth(mySound);
+					dashboard.draggingPaint = null;
+				}
 			}
-		
 			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)
 			 && !soundBeingMovedOldHome.add(draggingSoundView.sound))
 				Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");

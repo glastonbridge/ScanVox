@@ -62,4 +62,13 @@ public abstract class MappedSynth {
 	public String getTrevmapFileName(){
 		return ("mixedvoicedata_" + getBufFileNameRoot() + "_tcbuf_d5m12p99.trevmap1.aiff");
 	}
+	
+	/**
+	 * Override toString to provide a helpful name for this class
+	 */
+	@Override
+	public String toString() {
+		return getLabel();
+	}
 }
+

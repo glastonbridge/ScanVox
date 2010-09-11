@@ -37,7 +37,10 @@ class PlayingSound {
     private int ampMatchNode=-1;
     private int recordBuffer=-1;
     private int trigBus=-1;
-    private Allocator nodeAllocator, bufferAllocator, krBusAllocator;
+    private int audioBus=-1;
+    private int controlsBus=-1;
+    private int ampBus=-1;
+    private Allocator nodeAllocator, bufferAllocator, krBusAllocator, arBusAllocator;
     protected int length; //ms
     protected MappedSynth synth;
     protected boolean isValid = false; // SoundManager will set this true on completion
@@ -51,11 +54,13 @@ class PlayingSound {
     		Allocator nodeAllocator, 
     		Allocator bufferAllocator,
     		Allocator krBusAllocator,
+    		Allocator arBusAllocator,
     		MappedSynth synthType, 
     		int ampArrayLen) {
     	this.nodeAllocator = nodeAllocator;
     	this.bufferAllocator = bufferAllocator;
     	this.krBusAllocator = krBusAllocator;
+    	this.arBusAllocator = arBusAllocator;
     	this.synth = synthType;
     	
     	this.dbampAllocator = new NaiveAllocator(0);
@@ -92,5 +97,17 @@ class PlayingSound {
 			dbamps[index] = val;
 			intamps[index] = Math.max(0, Math.min(maxIntAmp, (int)((val + 60.f) * floatToIntRescaler)));
 		}
+	}
+	public int getControlsBus() {
+		if (controlsBus == -1) controlsBus = krBusAllocator.nextID();
+		return controlsBus;
+	}
+	public int getAmpBus() {
+		if (ampBus == -1) ampBus = krBusAllocator.nextID();
+		return ampBus;
+	}
+	public int getAudioBus() {
+		if (audioBus == -1) audioBus = arBusAllocator.nextID();
+		return audioBus;
 	}
 }
