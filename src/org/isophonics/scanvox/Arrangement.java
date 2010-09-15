@@ -59,6 +59,12 @@ public class Arrangement {
 		public float getStartTime() {	return startTime; }
 		public float getEndTime()   { return startTime+length; }
 		public float getLength()  { return length; }
+		@Override
+		public int hashCode() { return id.getRecordBuffer(); } 
+		public boolean equals(Object rhs) { 
+			return (rhs instanceof Sound 
+					&& this.hashCode() == rhs.hashCode());
+		}
 	}
 	public Vector<Row> rows=new Vector<Row>();
 

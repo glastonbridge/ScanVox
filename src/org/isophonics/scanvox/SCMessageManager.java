@@ -45,7 +45,7 @@ public class SCMessageManager {
 	}
 
 	/** How long to wait before checking supercollider again */
-	public static final long POLL_TIME = 10;
+	public static final long POLL_TIME = 100; //ms
 
 	public static final String TAG = "MessageManager";
 	
@@ -104,6 +104,10 @@ public class SCMessageManager {
 	 * @param om
 	 */
 	private void notifyListeners(OscMessage om) {
+		if (om==null) {
+			Log.e(TAG,"Received a null message from SuperCollider, communication may be corrupted.");
+			return;
+		}
 		String messageType = om.get(0).toString();
 		if (listeners.containsKey(messageType)) {
 			LinkedList<OscListener> handlerQueue = listeners.get(messageType);

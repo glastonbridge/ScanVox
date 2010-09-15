@@ -25,6 +25,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Debug;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -155,6 +156,7 @@ public class Dashboard extends View {
 		
 		@Override
 		public void recordStart(PlayingSound sound) {
+			//Debug.startMethodTracing("recording");
 			isRecording = true;
 			buttonImages[recordId] = waitButton;
 			levels = sound.intamps;
@@ -166,18 +168,22 @@ public class Dashboard extends View {
 			isRecording = false;
 			buttonImages[recordId] = recButton;
 			refreshHandler.trigger();
+			//Debug.stopMethodTracing();
 		}
 	};
 	
 	@Override
-	public void draw(Canvas canvas) {
+	public void onDraw(Canvas canvas) {
 		height = canvas.getHeight();
 		if (isRecording) {
 			int progressMiddle = 2* height / 5;
 			SoundView.drawWave(canvas, recordMonitor.levels, progressMiddle, 100);
+			return;
 		}
-		for (int i=0; i<buttonImages.length; ++i)
+		for (int i=0; i<buttonImages.length; ++i) {
+			Thread.yield();
 			canvas.drawBitmap(buttonImages[i],null, locateButton(i),buttonPaint);
+		}
 		if (getSynthPaletteVisibility()) {
 			Log.d(TAG,String.format("palette %d,%d,%d,%d",
 					synthPalette.getLeft(),

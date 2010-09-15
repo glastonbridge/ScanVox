@@ -217,11 +217,12 @@ public class Arranger extends View {
 	private Hashtable<Sound,SoundView>soundViews = new Hashtable<Sound,SoundView>();
 	private void drawRow (Canvas c, Arrangement.Row r, int rowNum) {
 		for (Sound s : r) {
+			Thread.yield();
 			float leftIndex  = s.getStartTime()*gridDimensions.x;
 			float topIndex   = rowNum*gridDimensions.y;
 			float rightIndex = leftIndex + s.getLength()*gridDimensions.x;
 			float bottomIndex= topIndex + gridDimensions.y;
-			if (soundViews.contains(s)) {
+			if (soundViews.containsKey(s)) {
 				((SoundView)soundViews.get(s)).draw(c);
 			} else {
 				SoundView newSoundView = new SoundView(getContext(), s, gridDimensions);
@@ -233,18 +234,6 @@ public class Arranger extends View {
 			}
 		}
 	}
-
-	//@Override
-	/*protected void onMeasure(int width, int height) {
-		super.onMeasure(width, height);
-		dashboard.measure(getMeasuredWidth(), getMeasuredHeight());
-	}*/
-	
-	//@Override
-	/*protected void onLayout(boolean changed,int l,int t, int r, int b) {
-		super.onLayout(changed, l, t, r, b);
-		dashboard.layout(l, t, r, b);
-	}*/
 	
     private RefreshHandler refreshHandler = new RefreshHandler();
 
@@ -328,14 +317,15 @@ public class Arranger extends View {
 						soundManager.addSynth(mySound);
 					} catch (IOException io) {
 						io.printStackTrace();
-					} finally {
-						dashboard.draggingPaint = null;
-					}
+					} 
 				}
+				dashboard.draggingPaint = null;
+				return true;
 			}
 			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)
 			 && !soundBeingMovedOldHome.add(draggingSoundView.sound))
 				Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
+			soundViews.remove(draggingSoundView.sound);
 			draggingSoundView = null;
 			invalidate();
 			return true;

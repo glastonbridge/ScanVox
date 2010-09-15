@@ -136,7 +136,9 @@ public class ScanVox extends Activity {
     			arranger.startRecording();
     			break;
     		case ARRANGING:
+    			webView = (WebView) findViewById(R.id.webcontent);
     			setContentView(R.layout.arranger);
+    			if (webView!=null) webView.destroy();
     			arranger = (Arranger) findViewById(R.id.arranger);
     			Dashboard d = (Dashboard) findViewById(R.id.dashboard);
     			arranger.setDashboard(d);
@@ -203,6 +205,7 @@ public class ScanVox extends Activity {
     
     @Override
     public void onPause() {
+		if (wakeLock!=null) wakeLock.release();
     	super.onPause();
     	if (superCollider != null) {
 	    	superCollider.closeUDP();
@@ -219,7 +222,6 @@ public class ScanVox extends Activity {
 			}
 
     	}
-		if (wakeLock!=null) wakeLock.release();
 		this.finish();
     }
     
@@ -307,7 +309,7 @@ public class ScanVox extends Activity {
 				setUserActivity(UserActivity.FATAL_ERROR);
 			} else {
 				superCollider = new SCAudio(dllDirStr);
-				superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
+				//superCollider.openUDP(57110); // can remove this when stable - using UDP for dev testing
 				superCollider.start();
 			    messageManager = new SCMessageManager();
 			    messageManager.startListening(superCollider);
@@ -318,5 +320,13 @@ public class ScanVox extends Activity {
 		        setUserActivity(UserActivity.WELCOME);
 			}
 		}
+	}
+	
+	/**
+	 * Don't let a crash flatten your battery
+	 */
+	@Override
+	public void finalize() {
+		if (wakeLock!=null) wakeLock.release();
 	}
 }

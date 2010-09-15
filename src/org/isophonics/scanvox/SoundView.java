@@ -30,6 +30,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Bitmap.Config;
 import android.graphics.Paint.Style;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -45,6 +46,7 @@ public class SoundView extends View {
 
 	private static final int LEVEL_QUIET = 30;
 	private static final int LEVEL_MID   = 70;
+	private static final String TAG = "SoundView";
 	
 	public SoundView(Context context, Sound s,GridDimensions gd) {
 		super(context);
@@ -74,6 +76,10 @@ public class SoundView extends View {
 			quietPaint.setColor(0xFF008800);
 			midPaint.setColor(0xFF888800);
 			loudPaint.setColor(0xFF880000);			
+			
+			quietPaint.setAntiAlias(false);
+			midPaint.setAntiAlias(false);
+			loudPaint.setAntiAlias(false);
 		}
 	}
 	private static StaticDataStore graphics = null;
@@ -98,25 +104,28 @@ public class SoundView extends View {
 			int[] levels, 
 			int axis ,
 			int height) {
-		
 		// NB. will fail if initDataStore has not been called
 		int height2 = height/2;
-		int barWidth = canvas.getWidth() / levels.length;
-		int progressLeft = 0;
-		int progressRight =barWidth;
+		float barWidth = canvas.getWidth() / levels.length;
+		int progressLeft =0,progressRight = 0 ;
 		Paint recordPaint;
+		int barIterator = 0;
 		for (int level : levels) {
+			Thread.yield(); // if we're in recording mode, be gentle with processor time
+			progressLeft = (int)(barWidth*barIterator);
+			progressRight = (int)(barWidth*(barIterator+1));
 			if      (level < LEVEL_QUIET ) recordPaint = graphics.quietPaint;
 			else if (level < LEVEL_MID   ) recordPaint = graphics.midPaint;
 			else                           recordPaint = graphics.loudPaint;
+			int scaledLevel = height2*level/100;
+			if (scaledLevel == 0) scaledLevel = 1;
 			canvas.drawRect(
 					progressLeft,
-					axis- height2*level/100, 
+					axis- scaledLevel, 
 					progressRight, 
-					axis+ height2*level/100, 
+					axis+ scaledLevel, 
 					recordPaint);
-			progressLeft += barWidth;
-			progressRight+= barWidth;
+			++barIterator;
 		}		
 	}
 

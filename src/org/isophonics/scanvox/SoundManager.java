@@ -389,7 +389,7 @@ public class SoundManager {
 	 */
 	public void setSoundStart(PlayingSound sound, float f) {
 		OscMessage startMessage = new OscMessage(new Object[] {
-				"n_set",sound.getPlayNode(),"myphase",f
+				"n_set",sound.getSupervisorNode(),"myphase",f
 		});
 		Log.d(TAG,startMessage.toString());
 		superCollider.sendMessage(startMessage);
