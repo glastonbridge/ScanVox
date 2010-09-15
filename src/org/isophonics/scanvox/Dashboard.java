@@ -23,6 +23,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Debug;
@@ -58,14 +59,17 @@ public class Dashboard extends View {
 	private int buttonHeight = 50;
 	public static final int trashId = 0, recordId = 1, synthId = 2;
 	private static final String TAG = "Dashboard";
+	private static final float SCALE_SMALL = 0.7f;
 	protected int height; // Needed for locating buttons that have been drawn
 	private Arranger.RefreshHandler refreshHandler;
 	private ListView synthPalette;
 	private MappedSynth[] synthList;
 	protected boolean isRecording = false;
 	public Paint buttonPaint;
-	public Bitmap[] buttonImages = new Bitmap[3]; // The currently-visible buttons
-	private Bitmap waitButton, recButton; // buttonImages 
+	public Bitmap[] buttonImages; // The currently-visible buttons
+	//private Bitmap waitButton, recButton; // buttonImages 
+	public Bitmap[] buttonImagesSmall = new Bitmap[3];
+	public Bitmap[] buttonImagesLarge = new Bitmap[3];
 	
 	// @TODO: this is just a stop-gap while i transfer dashboard-related stuff here
 	private Arranger parent;
@@ -76,12 +80,23 @@ public class Dashboard extends View {
 		buttonPaint = new Paint(); // used only on bitmaps, doesn't do very much
 		buttonPaint.setAntiAlias(false);
 		
+		buttonImages = buttonImagesLarge;
+		
 		buttonImages[trashId]  = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.bin);
 		buttonImages[recordId] = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.rec);
 		buttonImages[synthId]  = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.wave);
-		recButton = buttonImages[recordId];
-		waitButton = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.wait);
+		//recButton = buttonImages[recordId];
+		//waitButton = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.wait);
 
+		Matrix shrink = new Matrix();
+		shrink.postScale(SCALE_SMALL, SCALE_SMALL);
+		
+		for (int i = 0; i< buttonImages.length; ++i)
+			buttonImagesSmall[i] = Bitmap.createBitmap(
+				buttonImages[i], 0, 0, 
+				buttonImages[i].getWidth(), buttonImages[i].getHeight(),
+				shrink, true);
+		
 		buttonHeight     = buttonImages[0].getHeight();
 		this.refreshHandler = refreshHandler;
 		
@@ -112,31 +127,13 @@ public class Dashboard extends View {
 	TextView draggingPaint;
 	
 	/**
-	 * Measures the space - for the synth palette primarily
-	 */
-/*	public void onMeasure(int width, int height) {
-		super.onMeasure(width, height);
-		this.height = height;
-		synthPalette.measure(
-				MeasureSpec.makeMeasureSpec(300, MeasureSpec.AT_MOST),
-				MeasureSpec.makeMeasureSpec(height-buttonHeight, MeasureSpec.AT_MOST));		
-	}*/
-	
-	/**
 	 * lay out the synth palette
 	 */
-/*	public void onLayout(boolean changed, int l,int t,int r,int b) {
-		Rect synthButton = locateButton(synthId);
-		int centreX = ( synthButton.left + synthButton.right)/2;
-		int paletteWidth2 = synthPalette.getMeasuredWidth() /2;
-
-		synthPalette.layout(
-				centreX - paletteWidth2, 
-				synthButton.bottom - synthPalette.getMeasuredHeight(), 
-				centreX + paletteWidth2,
-				synthButton.top);
+	public void onLayout(boolean changed, int l,int t,int r,int b) {
+		super.onLayout(changed, l, t, r, b);
+		buttonImages = ( r-l < 400 )?buttonImagesSmall:buttonImagesLarge;
 	}
-*/	
+	
 	/**
 	 * Toggle synth list visibility
 	 */
@@ -158,7 +155,7 @@ public class Dashboard extends View {
 		public void recordStart(PlayingSound sound) {
 			//Debug.startMethodTracing("recording");
 			isRecording = true;
-			buttonImages[recordId] = waitButton;
+			//buttonImages[recordId] = waitButton;
 			levels = sound.intamps;
 			refreshHandler.trigger();
 		}
@@ -166,7 +163,7 @@ public class Dashboard extends View {
 		@Override
 		public void recordEnd() {
 			isRecording = false;
-			buttonImages[recordId] = recButton;
+			//buttonImages[recordId] = recButton;
 			refreshHandler.trigger();
 			//Debug.stopMethodTracing();
 		}
@@ -242,19 +239,10 @@ public class Dashboard extends View {
 
 	public void stopRecording() { 
 		isRecording= false; 
-		buttonImages[recordId] = recButton;
+		//buttonImages[recordId] = recButton;
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
-		if (getSynthPaletteVisibility()) {
-			if (event.getAction() == MotionEvent.ACTION_UP) {
-				synthPalette.performClick();
-			}
-			if (synthPalette.dispatchTouchEvent(event)) {
-				invalidate();
-				return true;
-			}
-		}
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			int buttonId = identifyButton((int)event.getX(), (int)event.getY());
 			if (buttonId != -1) {
@@ -265,10 +253,12 @@ public class Dashboard extends View {
 							stopRecording();
 						} else {
 							parent.startRecording();
+							return true;
 						}
 					}
 				} else if (buttonId == Dashboard.trashId) {
 					Toast.makeText(getContext(),"Drag a sound onto the trashcan to delete it.",Toast.LENGTH_SHORT).show();
+					return true;
 				} else if (buttonId == Dashboard.synthId) {
 					showSynthPalette(! getSynthPaletteVisibility());
 					return true;
@@ -296,6 +286,7 @@ public class Dashboard extends View {
 		synthPalette.setVisibility(
 				synthPaletteOpen?View.VISIBLE:View.INVISIBLE
 		);
+		synthPalette.setClickable(synthPaletteOpen);
 	}
 
 	private boolean getSynthPaletteVisibility() {

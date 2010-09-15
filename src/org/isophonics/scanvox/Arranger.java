@@ -268,39 +268,34 @@ public class Arranger extends View {
 			return true;
 		lastUpdateTime = now;
 		
-		if (dashboard.onTouchEvent(event)) {
-			invalidate();
-			return true;
-		}
-		
 		if (event.getAction()==MotionEvent.ACTION_DOWN) {
 			if ( draggingSoundView != null ) {
 				// Sanity check, we should never have an action down before a previous action up
 				Log.e(TAG,"Arranger was asked to pick up a sound while it was already holding one.");
 				Toast.makeText(getContext(), "I've got confused, and I might have mucked up your tune.", Toast.LENGTH_SHORT).show();
 				draggingSoundView = null;
+			} else {
+				int rowNum = (int) event.getY() / (int)gridDimensions.y;
+				if (arrangement.rows.size()>rowNum) {
+					Arrangement.Row row = arrangement.rows.get(rowNum);
+					Sound soundBeingMoved = row.grabSoundAt(
+							event.getX()/gridDimensions.x);
+					if (soundBeingMoved != null) {
+						draggingSoundView = soundViews.get(soundBeingMoved);
+
+						soundBeingMovedOldHome = row;
+						soundBeingMovedHandleX = event.getX() - draggingSoundView.getLeft();
+						soundBeingMovedHandleY = event.getY() - draggingSoundView.getTop();
+						return true;
+					}
+				} 
 			}
-			int rowNum = (int) event.getY() / (int)gridDimensions.y;
-			if (arrangement.rows.size()>rowNum) {
-				Arrangement.Row row = arrangement.rows.get(rowNum);
-				Sound soundBeingMoved = row.grabSoundAt(
-						event.getX()/gridDimensions.x);
-				if (soundBeingMoved != null)
-					draggingSoundView = soundViews.get(soundBeingMoved);
-				if(draggingSoundView!=null) {
-					soundBeingMovedOldHome = row;
-					soundBeingMovedHandleX = event.getX() - draggingSoundView.getLeft();
-					soundBeingMovedHandleY = event.getY() - draggingSoundView.getTop();
-					invalidate();
-					return true;
-				}
-			} 
-		} else if (event.getAction()==MotionEvent.ACTION_MOVE) {
+		} else if (event.getAction()==MotionEvent.ACTION_MOVE && dashboard.draggingPaint == null) {
 			soundBeingMovedX = event.getX() - soundBeingMovedHandleX;
 			soundBeingMovedY = event.getY() - soundBeingMovedHandleY;
 			invalidate();
 			return true;
-		} else if (event.getAction()==MotionEvent.ACTION_UP && draggingSoundView != null) {
+		} else if (event.getAction()==MotionEvent.ACTION_UP) {
 			if (dashboard.draggingPaint!=null) {
 				MappedSynth newSynth = null;
 				for (MappedSynth i : ScanVox.myMappedSynths) {
@@ -319,16 +314,17 @@ public class Arranger extends View {
 						io.printStackTrace();
 					} 
 				}
-				dashboard.draggingPaint = null;
+				dashboard.draggingPaint = null;	
+			}
+			if ( draggingSoundView != null ) {
+				if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)
+				 && !soundBeingMovedOldHome.add(draggingSoundView.sound))
+					Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
+				soundViews.remove(draggingSoundView.sound);
+				draggingSoundView = null;
+				invalidate();
 				return true;
 			}
-			if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)
-			 && !soundBeingMovedOldHome.add(draggingSoundView.sound))
-				Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
-			soundViews.remove(draggingSoundView.sound);
-			draggingSoundView = null;
-			invalidate();
-			return true;
 		}
 		return false;
 	}

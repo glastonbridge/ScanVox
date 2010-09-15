@@ -25,6 +25,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -67,11 +68,12 @@ public class SoundView extends View {
 		Paint quietPaint = new Paint();
 		Paint midPaint = new Paint();
 		Paint loudPaint = new Paint();
-
+		
 		public StaticDataStore(Resources res) {
 			soundFrontLeft   = BitmapFactory.decodeResource(res, R.drawable.chunk_front_left);
 			soundFrontMiddle = BitmapFactory.decodeResource(res, R.drawable.chunk_front_mid);
 			soundFrontRight  = BitmapFactory.decodeResource(res, R.drawable.chunk_front_right);
+						
 			bevelWidth       = soundFrontLeft.getWidth();
 			quietPaint.setColor(0xFF008800);
 			midPaint.setColor(0xFF888800);
