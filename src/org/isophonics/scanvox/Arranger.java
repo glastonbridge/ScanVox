@@ -53,7 +53,7 @@ import android.widget.Toast;
  */
 public class Arranger extends View {
 	private static final String TAG = "Arranger";
-	
+
 	private static final int bufferDuration = 2000; // ms
 	private static final int CURSOR_COLOUR = 0x22444444;
 	
@@ -97,6 +97,15 @@ public class Arranger extends View {
 		dashboard.init(this, refreshHandler, ScanVox.myMappedSynths);
 	}
 	
+	@Override
+	public void onLayout(boolean changed, int l, int t, int r, int b) {
+		super.onLayout(changed, l, t, r, b);
+		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);  // Hopefully this will slow down the GUI a bit and give recording a chance
+		gridDimensions.x = getWidth()/arrangement.length;
+		height = getHeight();
+		soundViews.clear();
+	}
+	
 	private void init() {
 		
 		backgroundPaint = new Paint();
@@ -108,11 +117,7 @@ public class Arranger extends View {
 		soundPaint.setAntiAlias(false);
 		
 		Bitmap soundFrontLeft   = BitmapFactory.decodeResource(getResources(), R.drawable.chunk_front_left);
-		
 		gridDimensions.y        = soundFrontLeft.getHeight();
-		gridDimensions.x = getWidth()/arrangement.length;
-		height = getHeight();
-		
 	}
 	
 	/**
