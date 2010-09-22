@@ -18,6 +18,7 @@
 package org.isophonics.scanvox;
 
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import net.sf.supercollider.android.OscMessage;
@@ -103,7 +104,10 @@ public class Arranger extends View {
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);  // Hopefully this will slow down the GUI a bit and give recording a chance
 		gridDimensions.x = getWidth()/arrangement.length;
 		height = getHeight();
-		soundViews.clear();
+		Enumeration<SoundView> soundViewEnumeration = soundViews.elements();
+		while (soundViewEnumeration.hasMoreElements()) {
+			soundViewEnumeration.nextElement().needsRefresh = true;
+		}
 	}
 	
 	private void init() {
@@ -164,11 +168,11 @@ public class Arranger extends View {
 	}
 	
 	SoundView draggingSoundView = null;
-	private float soundBeingMovedX, soundBeingMovedY;
+	private int	soundBeingMovedX, soundBeingMovedY;
 	/** The distance between the top left corner and where you're actually touching */
-	private float soundBeingMovedHandleX, soundBeingMovedHandleY; 
+	private int grabbedSoundHandleX, grabbedSoundHandleY; 
 	
-	private Arrangement.Row soundBeingMovedOldHome;
+	private Arrangement.Row grabbedSoundOldHome;
 	
 	/**
 	 * Refresh the user graphics
@@ -183,23 +187,32 @@ public class Arranger extends View {
 		int rowNum=0;
 		for (Arrangement.Row row : arrangement.rows) drawRow(c,row,rowNum++); // crow!
 		if (draggingSoundView != null) {
-			draggingSoundView.layout(
-					(int)soundBeingMovedX,
-					(int)soundBeingMovedY,0,0);
+			placeSoundView(draggingSoundView, soundBeingMovedX, soundBeingMovedY);
 			draggingSoundView.draw(c);
 		}
 		// cursor
-		Log.d(TAG,String.format("drawRect(%d,%d,%d,%d)", 
-				cursorPos*gridDimensions.x,0,
-				(cursorPos+1)*gridDimensions.x,
-				height));
 		c.drawRect(
 				cursorPos*gridDimensions.x,0,
 				(cursorPos+1)*gridDimensions.x,
 				height, cursorPaint);
-		dashboard.draw(c);
 	}
 	
+	/**
+	 * Puts a SoundView at the specified x and y coordinates
+	 * 
+	 * @param soundView
+	 * @param x
+	 * @param y
+	 */
+	private void placeSoundView(SoundView soundView,int x, int y) {
+
+		soundView.layout(
+				x,
+				y,
+				x + soundView.getMeasuredWidth(),
+				y + soundView.getMeasuredHeight());		
+	}
+
 	/**
 	 * Set up the size of the 
 	 */
@@ -223,20 +236,23 @@ public class Arranger extends View {
 	private void drawRow (Canvas c, Arrangement.Row r, int rowNum) {
 		for (Sound s : r) {
 			Thread.yield();
-			float leftIndex  = s.getStartTime()*gridDimensions.x;
-			float topIndex   = rowNum*gridDimensions.y;
-			float rightIndex = leftIndex + s.getLength()*gridDimensions.x;
-			float bottomIndex= topIndex + gridDimensions.y;
+			int leftIndex  = (int)s.getStartTime()*gridDimensions.x;
+			int topIndex   = rowNum*gridDimensions.y;
+			SoundView thisSoundView = null;
 			if (soundViews.containsKey(s)) {
-				((SoundView)soundViews.get(s)).draw(c);
+				thisSoundView = ((SoundView)soundViews.get(s));
 			} else {
-				SoundView newSoundView = new SoundView(getContext(), s, gridDimensions);
-				// measuring is done here, as sounds are added in an ad-hoc way
-				newSoundView.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
-				newSoundView.layout((int)leftIndex,(int)topIndex,(int)rightIndex,(int)bottomIndex);
-				soundViews.put(s, newSoundView);
-				newSoundView.draw(c);
+				thisSoundView = new SoundView(getContext(), s, gridDimensions);
+				soundViews.put(s, thisSoundView);
 			}
+			if (thisSoundView.needsRefresh) { 
+				// measuring is done here, as sounds are added in an ad-hoc way
+				thisSoundView.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED);
+				thisSoundView.render(gridDimensions);
+				thisSoundView.needsRefresh = false;
+			}
+			placeSoundView(thisSoundView,leftIndex,topIndex);
+			thisSoundView.draw(c);
 		}
 	}
 	
@@ -280,50 +296,21 @@ public class Arranger extends View {
 				Toast.makeText(getContext(), "I've got confused, and I might have mucked up your tune.", Toast.LENGTH_SHORT).show();
 				draggingSoundView = null;
 			} else {
-				int rowNum = (int) event.getY() / (int)gridDimensions.y;
-				if (arrangement.rows.size()>rowNum) {
-					Arrangement.Row row = arrangement.rows.get(rowNum);
-					Sound soundBeingMoved = row.grabSoundAt(
-							event.getX()/gridDimensions.x);
-					if (soundBeingMoved != null) {
-						draggingSoundView = soundViews.get(soundBeingMoved);
-
-						soundBeingMovedOldHome = row;
-						soundBeingMovedHandleX = event.getX() - draggingSoundView.getLeft();
-						soundBeingMovedHandleY = event.getY() - draggingSoundView.getTop();
-						return true;
-					}
-				} 
+				draggingSoundView = grabSoundAt(event.getX(),event.getY());
+				if (draggingSoundView != null) return true;
 			}
 		} else if (event.getAction()==MotionEvent.ACTION_MOVE && dashboard.draggingPaint == null) {
-			soundBeingMovedX = event.getX() - soundBeingMovedHandleX;
-			soundBeingMovedY = event.getY() - soundBeingMovedHandleY;
+			soundBeingMovedX = (int) (event.getX() - grabbedSoundHandleX);
+			soundBeingMovedY = (int) (event.getY() - grabbedSoundHandleY);
 			invalidate();
 			return true;
 		} else if (event.getAction()==MotionEvent.ACTION_UP) {
 			if (dashboard.draggingPaint!=null) {
-				MappedSynth newSynth = null;
-				for (MappedSynth i : ScanVox.myMappedSynths) {
-					if (i.getLabel().equals(dashboard.draggingPaint.getText().toString())) {
-						newSynth = i;
-						break;
-					}
-				}
-				if (newSynth!=null) {
-					try {
-						PlayingSound mySound = draggingSoundView.sound.id;
-						mySound.synth = newSynth;
-						soundManager.removeSynth(mySound);
-						soundManager.addSynth(mySound);
-					} catch (IOException io) {
-						io.printStackTrace();
-					} 
-				}
-				dashboard.draggingPaint = null;	
+				applyPaintToCurrentSound();
 			}
 			if ( draggingSoundView != null ) {
-				if (!addSoundAt(event.getX() - soundBeingMovedHandleX, event.getY() - soundBeingMovedHandleY, draggingSoundView.sound)
-				 && !soundBeingMovedOldHome.add(draggingSoundView.sound))
+				if (!addSoundAt(event.getX() - grabbedSoundHandleX, event.getY() - grabbedSoundHandleY, draggingSoundView.sound)
+				 && !grabbedSoundOldHome.add(draggingSoundView.sound))
 					Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
 				soundViews.remove(draggingSoundView.sound);
 				draggingSoundView = null;
@@ -334,6 +321,57 @@ public class Arranger extends View {
 		return false;
 	}
 	
+	/**
+	 * Add the currently-selected paint to the currently-selected sound
+	 */
+	private void applyPaintToCurrentSound() {
+		MappedSynth newSynth = null;
+		for (MappedSynth i : ScanVox.myMappedSynths) {
+			if (i.getLabel().equals(dashboard.draggingPaint.getText().toString())) {
+				newSynth = i;
+				break;
+			}
+		}
+		if (newSynth!=null) {
+			try {
+				PlayingSound mySound = draggingSoundView.sound.id;
+				mySound.synth = newSynth;
+				soundManager.removeSynth(mySound);
+				soundManager.addSynth(mySound);
+			} catch (IOException io) {
+				io.printStackTrace();
+			} 
+		}
+		dashboard.draggingPaint = null;
+	}
+
+	/**
+	 * Grab a sound, based on its X and Y coordinates.  Remove it from
+	 * the arrangement.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return The SoundView related to that sound, or null if none
+	 * were found
+	 */
+	private SoundView grabSoundAt(float x, float y) {
+		int rowNum = (int)(y / gridDimensions.y);
+		if (arrangement.rows.size()>rowNum) {
+			Arrangement.Row row = arrangement.rows.get(rowNum);
+			Sound soundBeingMoved = row.grabSoundAt(
+					x/gridDimensions.x);
+			if (soundBeingMoved != null) {
+				draggingSoundView = soundViews.get(soundBeingMoved);
+				grabbedSoundOldHome = row;
+				grabbedSoundHandleX = (int) (x - draggingSoundView.getLeft());
+				grabbedSoundHandleY = (int) (y - draggingSoundView.getTop());
+
+				return draggingSoundView;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Notifies all relevant objects to start their sound recording activity
 	 */
@@ -351,7 +389,7 @@ public class Arranger extends View {
 				Arrangement.Row row = arrangement.rows.get(rowNum);
 				if (row.isEmpty()) {
 					int arrangedSize = (thisSynth.length*arrangement.bpm*arrangement.ticksPerBeat)/(60*1000);
-					row.add (new Sound (thisSynth, (int)(16*thisSynth.phase), arrangedSize));
+					row.add (arrangement.new Sound (thisSynth, 16*thisSynth.phase, arrangedSize));
 					break;
 				}
 			}
@@ -373,7 +411,7 @@ public class Arranger extends View {
 		int rowNum = (int) (y / gridDimensions.y);
 		if (arrangement.rows.size() <= rowNum || rowNum <0) return false;
 		Arrangement.Row row = arrangement.rows.get(rowNum);
-		Sound updatedSound = new Sound (s.id,x/gridDimensions.x,s.getLength());
+		Sound updatedSound = arrangement.new Sound (s.id,x/gridDimensions.x,s.getLength());
 		boolean couldAddSound = row.add (updatedSound);
 		if (couldAddSound) {
 			soundManager.setSoundStart(updatedSound.id,x/(gridDimensions.x*arrangement.length));

@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
@@ -99,7 +100,7 @@ public class ScanVox extends Activity {
 	public static final int numberOfRows = 10;
 	private static final String TAG = "ScanVox";
 
-	public static final long GRAPHIC_REFRESH_PERIOD = 150;
+	public static final long GRAPHIC_REFRESH_PERIOD = 70;
 	
 	protected Arrangement arrangement = new Arrangement(numberOfRows);
 
@@ -189,6 +190,7 @@ public class ScanVox extends Activity {
     	
         super.onCreate(savedInstanceState);
 
+        //Debug.startMethodTracing("all");
     	SCAudio.sampleRateInHz = 44100;
 
         activityChooser = new ActivityChooser();
@@ -205,6 +207,7 @@ public class ScanVox extends Activity {
     
     @Override
     public void onPause() {
+    	//Debug.stopMethodTracing();
 		if (wakeLock!=null) wakeLock.release();
     	super.onPause();
     	if (superCollider != null) {

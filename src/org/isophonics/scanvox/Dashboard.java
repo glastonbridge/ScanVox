@@ -165,6 +165,7 @@ public class Dashboard extends View {
 			isRecording = false;
 			//buttonImages[recordId] = recButton;
 			refreshHandler.trigger();
+			//Debug.startMethodTracing("playing");
 			//Debug.stopMethodTracing();
 		}
 	};

@@ -44,6 +44,7 @@ public class SoundView extends View {
 	protected Bitmap internalRepresentation;
 	private GridDimensions gridDimensions;
 	private Paint backgroundPaint;
+	public boolean needsRefresh;
 
 	private static final int LEVEL_QUIET = 30;
 	private static final int LEVEL_MID   = 70;
@@ -52,12 +53,11 @@ public class SoundView extends View {
 	public SoundView(Context context, Sound s,GridDimensions gd) {
 		super(context);
 		sound = s;
-		gridDimensions = gd;
 		backgroundPaint = new Paint();
 		backgroundPaint.setAntiAlias(true);
 		backgroundPaint.setStyle(Style.FILL);
 		backgroundPaint.setColor(0xFFAAAA44); // Yellowy
-		render();
+		render(gd);
 	}
 	private static class StaticDataStore {
 		public Bitmap soundFrontLeft;
@@ -142,8 +142,10 @@ public class SoundView extends View {
 	/**
 	 * Render the sound to a bitmap in advance, so there's only one
 	 * performance hit
+	 * @param gridDimensions 
 	 */
-	private void render() {
+	void render(GridDimensions gridDimensions) {
+		this.gridDimensions = gridDimensions;
 		if (graphics == null) initDataStore(getResources());
 		int height = gridDimensions.y;
 		int width  = (int)(sound.getLength()*gridDimensions.x);
@@ -183,5 +185,6 @@ public class SoundView extends View {
 	@Override
 	public void onDraw(Canvas c) {
 		c.drawBitmap(internalRepresentation,getLeft(),getTop(),graphics.soundPaint);
+		if (sound.wrapsLoop() ) c.drawBitmap(internalRepresentation, getLeft()-c.getWidth(),getTop(),graphics.soundPaint);
 	}
 }

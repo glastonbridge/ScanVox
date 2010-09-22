@@ -43,19 +43,20 @@ public class Arrangement {
 	}
 	
 	/**
-	 * Represents one sound, and where it begins and ends 
+	 * Represents one sound, and where it begins and ends in this arrangement
 	 * @author alex
 	 *
 	 */
-	public static class Sound {
+	public class Sound {
 		private float startTime = 0;
 		private float length = 0;
 		protected PlayingSound id;
 		public Sound(PlayingSound id,float s, float l) {
 			this.id = id;
-			if (s>0) startTime = s; // quietly force into the +ve domain 
+			startTime = s % Arrangement.this.length; 
+			if(startTime<0) startTime = s + Arrangement.this.length; // quietly force into the +ve domain 
 			length = l;
-			}
+		}
 		public float getStartTime() {	return startTime; }
 		public float getEndTime()   { return startTime+length; }
 		public float getLength()  { return length; }
@@ -64,6 +65,9 @@ public class Arrangement {
 		public boolean equals(Object rhs) { 
 			return (rhs instanceof Sound 
 					&& this.hashCode() == rhs.hashCode());
+		}
+		public boolean wrapsLoop() {
+			return getEndTime()>Arrangement.this.length;
 		}
 	}
 	public Vector<Row> rows=new Vector<Row>();
@@ -112,8 +116,7 @@ public class Arrangement {
 		 */
 		public boolean add(Sound newSound) {
 			// Hello new sound, do you fit into this arrangement?
-			Log.d(TAG,"Trying to add sound ("+newSound.startTime+","+newSound.length+")");
-			if (newSound.getEndTime()>Arrangement.this.length) return false;
+			if (newSound.getStartTime()>Arrangement.this.length) return false;
 			float newSoundStartTime = newSound.getStartTime();
 			int index = 0;
 			// Do you belong right at the beginning?

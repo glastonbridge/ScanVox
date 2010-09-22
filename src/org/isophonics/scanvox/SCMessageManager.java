@@ -45,7 +45,7 @@ public class SCMessageManager {
 	}
 
 	/** How long to wait before checking supercollider again */
-	public static final long POLL_TIME = 100; //ms
+	public static final long POLL_TIME = 50; //ms
 
 	public static final String TAG = "MessageManager";
 	
@@ -111,13 +111,16 @@ public class SCMessageManager {
 		String messageType = om.get(0).toString();
 		if (listeners.containsKey(messageType)) {
 			LinkedList<OscListener> handlerQueue = listeners.get(messageType);
-			for (OscListener ol : handlerQueue) 
-				try {
-					ol.receive(om);
-				} catch (Exception e) {
-					Log.e(TAG,"An exception happened in an oscListener for "+om.get(0).toString());
-					e.printStackTrace();
+			synchronized(handlerQueue) {
+				for (OscListener ol : handlerQueue) {
+					try {
+						ol.receive(om);
+					} catch (Exception e) {
+						Log.e(TAG,"An exception happened in an oscListener for "+om.get(0).toString());
+						e.printStackTrace();
+					}
 				}
+			}
 		}
 	}
 
@@ -130,6 +133,7 @@ public class SCMessageManager {
 	private class EventLoop extends Thread {
 		
 		public void run() {
+			setPriority(MIN_PRIORITY);
 			while (listening) {
 				while (SCAudio.hasMessages()) {
 					OscMessage receivedMessage = SCAudio.getMessage();
