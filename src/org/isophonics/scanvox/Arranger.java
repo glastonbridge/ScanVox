@@ -309,7 +309,9 @@ public class Arranger extends View {
 				applyPaintToCurrentSound();
 			}
 			if ( draggingSoundView != null ) {
-				if (!addSoundAt(event.getX() - grabbedSoundHandleX, event.getY() - grabbedSoundHandleY, draggingSoundView.sound)
+				if ( Dashboard.trashId == dashboard.identifyButton((int)event.getX(), (int)event.getY()) ) {
+					soundManager.removeSound(draggingSoundView.sound.id);
+				} else if (!addSoundAt(event.getX() - grabbedSoundHandleX, event.getY() - grabbedSoundHandleY, draggingSoundView.sound)
 				 && !grabbedSoundOldHome.add(draggingSoundView.sound))
 					Log.e(TAG,"Could not replace a sound where it used to belong in an arrangement.");
 				soundViews.remove(draggingSoundView.sound);
