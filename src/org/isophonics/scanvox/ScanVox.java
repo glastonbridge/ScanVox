@@ -90,7 +90,7 @@ public class ScanVox extends Activity {
 	public static final MappedSynth[] myMappedSynths = {
 		new MappedSynth1AY1(),
 		new MappedSynth1Gendy1(),
-		new MappedSynth1GrainAmen1(),
+		//new MappedSynth1GrainAmen1(),
 		new MappedSynth1Moogy1(),
 		new MappedSynth1SuperSimple()
 	};
@@ -226,6 +226,11 @@ public class ScanVox extends Activity {
 
     	}
 		this.finish();
+    }
+    
+    @Override
+    public void onDestroy() {
+		System.exit(0); // Force cleanup of process space, avoids performance deterioration over successive sessions
     }
     
     /**
