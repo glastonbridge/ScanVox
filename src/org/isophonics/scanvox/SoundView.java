@@ -56,7 +56,7 @@ public class SoundView extends View {
 		backgroundPaint = new Paint();
 		backgroundPaint.setAntiAlias(true);
 		backgroundPaint.setStyle(Style.FILL);
-		backgroundPaint.setColor(0xFFAAAA44); // Yellowy
+		backgroundPaint.setColor(s.id.synth.getGuiColour()); // Yellowy
 		render(gd);
 	}
 	private static class StaticDataStore {
