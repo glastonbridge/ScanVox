@@ -378,7 +378,15 @@ public class Arranger extends View {
 	 * Notifies all relevant objects to start their sound recording activity
 	 */
 	public void startRecording() {
-		soundManager.recordNew(bufferDuration, mySac,new MappedSynth1AY1(),dashboard.recordMonitor);
+		dashboard.showSynthPalette(true);
+		dashboard.onSynthPaletteSelected(new SynthPalette.Handler() {
+			
+			@Override
+			public void selected(int choice) {
+				soundManager.recordNew(bufferDuration, mySac,ScanVox.myMappedSynths[choice],dashboard.recordMonitor);
+			}
+		});
+		
 	}
 
 	private class UpdateArrangerCallback implements SoundManager.SoundAddedCallback {

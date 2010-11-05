@@ -109,16 +109,21 @@ public class Dashboard extends View {
 	public void makeSynthList(ListView synthPalette) {
 		this.synthPalette = synthPalette;
 		synthPalette.setBackgroundColor(0xCCFFFFFF);
-		synthPalette.setAdapter(new ArrayAdapter<MappedSynth>(
+		synthPalette.setAdapter(new SynthPalette(
 				getContext(),
 				android.R.layout.simple_list_item_1,
 				synthList));
 		synthPalette.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
-				draggingPaint = (TextView) arg1;
 				showSynthPalette(false);
-				Toast.makeText(getContext(), "Tap a sound to change its synth", Toast.LENGTH_SHORT).show();
+				if (toDoAfterSynthPalette != null) {
+					toDoAfterSynthPalette.selected(arg2);
+					toDoAfterSynthPalette = null;
+				} else {
+					draggingPaint = (TextView) arg1;
+					Toast.makeText(getContext(), "Tap a sound to change its synth", Toast.LENGTH_SHORT).show();
+				}
 			}
 		});
 		synthPalette.setClickable(true);
@@ -283,7 +288,7 @@ public class Dashboard extends View {
 	 * 
 	 * @param synthPaletteOpen true to show, false to hide
 	 */
-	private void showSynthPalette(boolean synthPaletteOpen) {
+	public void showSynthPalette(boolean synthPaletteOpen) {
 		synthPalette.setVisibility(
 				synthPaletteOpen?View.VISIBLE:View.INVISIBLE
 		);
@@ -292,5 +297,11 @@ public class Dashboard extends View {
 
 	private boolean getSynthPaletteVisibility() {
 		return synthPalette.getVisibility() == View.VISIBLE;
+	}
+
+	// TODO: this is nasty, refactor
+	private SynthPalette.Handler toDoAfterSynthPalette;
+	public void onSynthPaletteSelected(SynthPalette.Handler handler) {
+		toDoAfterSynthPalette = handler;
 	}
 }
